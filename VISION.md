@@ -2,23 +2,25 @@
 
 ## Overview
 
-Cyber Arc is the next evolution of Cyber Pilot: a workspace-first system for building products across one or many repositories with AI agents, stable traceability, and minimal project footprint.
+Cyber Arc is a product delivery system that gives the whole product organization a single view of the product from intent to implementation and tests. It connects product management, design, architecture, engineering, QA, and expert teams in one workspace-oriented surface instead of scattering discussion, validation, and review across disconnected tools.
 
-Cyber Arc should let a developer launch `arc` without parameters, create a new Arc project or open an existing one, and for a new project choose a folder such as `~/arc/cool-project`. Each Arc project should host a workspace of one or many Git repositories for code and documentation, and Arc should let the team add or remove repositories as the product evolves.
+Cyber Arc is the next evolution of Cyber Pilot. Where Cyber Pilot established deterministic generation and validation patterns, Arc extends that foundation into a shared system where product definition, implementation, validation, and review can happen together.
 
-The same Arc skill should be available to IDE agents, Claude Code, Codex, Devin, and to Arc's own web/server chat surface. That skill should generate and validate documentation in the right repositories, generate code from that documentation in code repositories, enforce templates and checklists, preserve stable identifiers across documents and code comments, and support reverse engineering from code or free-form documentation. Cyber Arc itself, through its CLI and Server surfaces, should be able to invoke and coordinate agent tools as part of the workspace workflow.
+Arc should let teams trace work end to end and back again: from intent, requirements, and design to plans, code, tests, validation results, and review discussions. That traceability is not only technical. Arc should also provide the collaboration system around those artifacts so teams can review, discuss, validate, and coordinate in the same place.
 
-In server mode, Arc should provide a centralized web application with a chat with the Arc agent, documentation and code visualization, AI-assisted proxy integrations, diff views, inline comments, and Git/PR-oriented change management. It should be deployable locally, in the cloud, or on a dedicated server so developers and product managers can work together in the same Arc project.
+Arc should combine three strengths in one system: Git-style review, comments, and change tracking; Cyber Pilot-style templates, checklists, deterministic generation, and validation; and collaboration patterns familiar from shared knowledge systems, including assisted coordination around comments and follow-ups. The result should be a deterministic collaborative system for product delivery, not just another IDE assistant or documentation tool.
 
-Arc is intentionally minimal in project footprint: anything that can live outside the target project should live outside it. Project-local customization should be explicit, small, and patchable. Arc should be forked from Cyber Pilot and reuse its codebase, prompts, and operating model where possible, while evolving toward a centralized multi-repo and multi-user platform. Arc will also absorb what is currently known as Cyber Wiki and support the broader Cyber Fabric stack, including FrontX and Core.
+The user experience should stay consistent across local and centralized modes. A developer should be able to launch Arc locally in the IDE and use the same Arc skill, workflows, and mental model that they would see in a web/server deployment. Whether the entry point is a local agent, CLI, or Arc web chat, the capabilities and outcomes should feel like one product.
+
+Underneath that experience, Arc should support multi-repo workspaces, agent and model integrations, workflow orchestration, strong kit integration, stable identifiers, and a minimal project footprint. Work done through Arc should flow cleanly into diffs, review threads, and pull requests so workspace activity becomes reviewable delivery output.
 
 ## Why the name Arc
 
 The name **Arc** carries two meanings.
 
-On one side, it stands for **Architect** and **Architecture**: the discipline of shaping systems deliberately, keeping requirements, design, plans, and implementation aligned instead of letting them drift apart.
+On one side, it stands for **Architect** and **Architecture**: the discipline of shaping products deliberately across requirements, design, implementation, and validation.
 
-On the other side, it represents an **arc** or a **bridge**: a structure that connects separate layers, repositories, artifacts, and roles across the SDLC. Arc is meant to span the gaps between product thinking, documentation, code, validation, and change management, turning them into one connected delivery surface.
+On the other side, it represents an **arc** or a **bridge**: the structure that connects product intent, technical implementation, tests, and the teams responsible for each of them into one shared delivery system.
 
 ## Overview Diagram
 
@@ -26,17 +28,17 @@ On the other side, it represents an **arc** or a **bridge**: a structure that co
 
 ## Product Direction
 
-- **Workspace-first**
-  Arc manages one or many repositories as a single working context for documentation, code, and delivery, with repository membership evolving over time.
-- **Agent-native**
-  Arc exposes one Arc skill surface across IDE agents and the web app chat so the same workflows work in both places, while Cyber Arc itself invokes and coordinates agent tools through its CLI and Server surfaces.
-- **Traceability-first**
-  Cyber Arc Core controls stable identifiers directly and uses them to connect requirements, design, plans, code, and review surfaces, including identifiers embedded in code comments.
-- **Minimal footprint**
-  Arc keeps project-local files to the minimum necessary and prefers shared, externalized, upgradeable configuration.
-- **Customizable but updatable**
-  Prompts, techniques, templates, and kits can be customized without losing a clean path to future updates.
-- **Reviewable collaboration**
-  Arc makes documentation and code reviewable through shared visualization, diffs, inline comments, and Git/PR-aware change management.
-- **From local to centralized**
-  Arc works as a local CLI/workspace tool first, then scales into cloud or dedicated-server environments for developers and product managers collaborating on the same product surface.
+- **Single product view**
+  Arc gives product, design, architecture, engineering, QA, and expert teams one shared surface to understand the product from intent to code and tests.
+- **End-to-end traceability**
+  Arc lets teams trace forward and backward across requirements, design, plans, code, tests, validation results, and reviews.
+- **Deterministic collaboration**
+  Arc combines structured generation and validation with shared comments, review flows, reminders, and assisted coordination in one system.
+- **Same Arc skill everywhere**
+  The same Arc skill and workflows should work in IDE agents, CLI flows, and Arc web/server chat with no fundamental experience gap.
+- **Workspace-first multi-repo delivery**
+  Arc manages one or many repositories as a single delivery context and supports product work that spans documentation, code, and validation repositories.
+- **Reviewable change management**
+  Arc turns workspace activity into reviewable diffs, inline comments, and pull-request-ready changes with Git-aware workflows.
+- **Minimal footprint, strong integrations**
+  Arc keeps project-local state small and patchable while integrating well with models, agent runtimes, kits, and future centralized collaboration infrastructure.
