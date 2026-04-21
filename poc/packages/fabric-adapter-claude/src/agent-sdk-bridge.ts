@@ -1,11 +1,13 @@
 // AgentSDKBridge — wraps the Claude CLI for Fabric adapter use.
 // Handles agent creation, execution via subprocess, and result mapping.
 
-import { spawn } from "child_process";
+import { spawn, type ChildProcess } from "child_process";
 import type {
   ExecutionResult,
   ArtifactRef,
 } from "@cyber-fabric/fabric-core";
+
+const DEFAULT_INVOKE_TIMEOUT_MS = 120_000;
 
 /** Configuration for creating a Claude agent instance. */
 export interface AgentConfig {
@@ -17,6 +19,8 @@ export interface AgentConfig {
   readonly tools?: readonly ToolEntry[];
   /** Maximum tokens for agent response (not used with CLI) */
   readonly maxTokens?: number;
+  /** Timeout for CLI invocation in milliseconds (defaults to 120s) */
+  readonly timeoutMs?: number;
 }
 
 /** A tool entry in Fabric-neutral format. */
@@ -32,6 +36,8 @@ export interface BridgeSession {
   readonly config: AgentConfig;
   readonly createdAt: Date;
   active: boolean;
+  /** Handle to the running subprocess, if any (for mid-run termination) */
+  proc?: ChildProcess;
 }
 
 /** JSON output from Claude CLI with --output-format json */
@@ -106,7 +112,7 @@ export class AgentSDKBridge {
         };
       }
 
-      const result = await this.invokeCLI(session.config, taskPrompt);
+      const result = await this.invokeCLI(session, taskPrompt);
 
       return {
         status: "success",
@@ -129,11 +135,16 @@ export class AgentSDKBridge {
 
   /**
    * Invoke the Claude CLI with the given config and prompt.
+   * Honors session.config.timeoutMs (default 120s) and tracks the child process
+   * on the session so terminate() can kill it mid-run.
    */
   private async invokeCLI(
-    config: AgentConfig,
+    session: BridgeSession,
     taskPrompt: string
   ): Promise<{ text: string; artifacts: ArtifactRef[]; numTurns?: number; costUsd?: number }> {
+    const config = session.config;
+    const timeoutMs = config.timeoutMs ?? DEFAULT_INVOKE_TIMEOUT_MS;
+
     return new Promise((resolve, reject) => {
       const args = [
         "--print",
@@ -147,9 +158,18 @@ export class AgentSDKBridge {
         stdio: ["pipe", "pipe", "pipe"],
         env: { ...process.env },
       });
+      session.proc = proc;
 
       let stdout = "";
       let stderr = "";
+      let settled = false;
+
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try { proc.kill("SIGTERM"); } catch { /* ignore */ }
+        reject(new Error(`Claude CLI timed out after ${timeoutMs}ms`));
+      }, timeoutMs);
 
       proc.stdout.on("data", (data) => {
         stdout += data.toString();
@@ -160,6 +180,11 @@ export class AgentSDKBridge {
       });
 
       proc.on("close", (code) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        session.proc = undefined;
+
         if (code !== 0) {
           reject(new Error(`Claude CLI exited with code ${code}: ${stderr || stdout}`));
           return;
@@ -174,6 +199,10 @@ export class AgentSDKBridge {
       });
 
       proc.on("error", (err) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        session.proc = undefined;
         reject(new Error(`Failed to spawn Claude CLI: ${err.message}`));
       });
     });
@@ -220,12 +249,17 @@ export class AgentSDKBridge {
 
   /**
    * Terminate a bridge session and clean up resources.
+   * Kills the running subprocess if one is in flight.
    * @param sessionId - The session to terminate
    */
   terminate(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (session) {
       session.active = false;
+      if (session.proc) {
+        try { session.proc.kill("SIGTERM"); } catch { /* ignore */ }
+        session.proc = undefined;
+      }
       this.sessions.delete(sessionId);
     }
   }
@@ -257,20 +291,27 @@ export class AgentSDKBridge {
       const proc = spawn("claude", ["--version"], {
         stdio: ["pipe", "pipe", "pipe"],
       });
+      let settled = false;
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        try { proc.kill(); } catch { /* ignore */ }
+        resolve(false);
+      }, 5000);
 
       proc.on("close", (code) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         resolve(code === 0);
       });
 
       proc.on("error", () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
         resolve(false);
       });
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
-        proc.kill();
-        resolve(false);
-      }, 5000);
     });
   }
 

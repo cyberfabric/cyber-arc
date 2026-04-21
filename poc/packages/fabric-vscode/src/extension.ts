@@ -76,6 +76,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // --- Connect Orchestrator events to tree views ------------------------------
   const unsubscribe = orchestrator.onEvent((event: OrchestratorEvent) => {
+    if (event.type === "pipeline:start") {
+      planTreeProvider.setPipeline(event.pipeline);
+    }
+
     const state = orchestrator!.getExecutionState(event.pipelineId);
     if (state) {
       planTreeProvider.updateExecutionState(state);

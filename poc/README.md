@@ -66,7 +66,7 @@ The demo creates sample skill contracts, builds a pipeline, and attempts delegat
 
 ```bash
 cd poc
-npx tsx demo/run-demo.ts
+npm run demo
 ```
 
 The demo will:

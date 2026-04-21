@@ -1,7 +1,7 @@
 {
-  "name": "@cyber-fabric/fabric-vscode",
+  "name": "cyber-fabric-vscode",
   "displayName": "Cyber Fabric",
-  "publisher": "cyber-fabric",
+  "publisher": "cyberfabric",
   "version": "0.1.0",
   "description": "VS Code extension for Cyber Fabric — chat panel, plan tree, and orchestrator integration",
   "type": "module",
@@ -14,9 +14,10 @@
     }
   },
   "scripts": {
-    "build": "tsc && node -e \"const f=require('fs'),p=require('path');const s=p.join('src','webview'),d=p.join('dist','webview');f.mkdirSync(d,{recursive:true});for(const e of f.readdirSync(s))f.copyFileSync(p.join(s,e),p.join(d,e));\"",
+    "build": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node && mkdir -p dist/webview && cp src/webview/* dist/webview/",
     "clean": "rm -rf dist",
-    "test": "echo 'No tests configured' && exit 1"
+    "test": "echo 'No tests configured' && exit 1",
+    "package": "npm run build && vsce package --no-dependencies"
   },
   "engines": {
     "vscode": "^1.85.0"
@@ -87,7 +88,7 @@
     "@cyber-fabric/fabric-core": "*"
   },
   "devDependencies": {
-    "@types/vscode": "^1.85.0"
-  },
-  "peerDependencies": {}
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.28.0"
+  }
 }

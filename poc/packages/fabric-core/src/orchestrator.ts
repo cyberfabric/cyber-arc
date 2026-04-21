@@ -40,7 +40,7 @@ export type OrchestratorEvent =
   | { type: "step:start"; pipelineId: PipelineId; stepIndex: number }
   | { type: "step:complete"; pipelineId: PipelineId; stepIndex: number; result: ExecutionResult }
   | { type: "step:failed"; pipelineId: PipelineId; stepIndex: number; error: string }
-  | { type: "pipeline:start"; pipelineId: PipelineId }
+  | { type: "pipeline:start"; pipelineId: PipelineId; pipeline: Pipeline }
   | { type: "pipeline:complete"; pipelineId: PipelineId; result: ExecutionResult };
 export type OrchestratorEventListener = (event: OrchestratorEvent) => void;
 
@@ -146,7 +146,7 @@ export class Orchestrator implements Executor {
       startedAt: new Date().toISOString(),
     };
     this.states.set(pipeline.id, state);
-    this.emit({ type: "pipeline:start", pipelineId: pipeline.id });
+    this.emit({ type: "pipeline:start", pipelineId: pipeline.id, pipeline });
 
     const artifacts: Record<number, readonly ArtifactRef[]> = {};
 

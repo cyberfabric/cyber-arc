@@ -150,20 +150,17 @@ export class CodexAdapter implements AdapterContract {
     const timeout = this.config.defaultTimeoutMs ?? DEFAULT_TIMEOUT_MS;
     const cwd = this.config.workingDirectory ?? process.cwd();
 
-    const args: string[] = [
-      "--prompt",
-      prompt,
-      "--output-format",
-      "json",
-    ];
+    const args: string[] = ["exec", "--json"];
 
     if (cwd) {
-      args.push("--cwd", cwd);
+      args.push("-C", cwd);
     }
 
     if (this.config.extraFlags) {
       args.push(...this.config.extraFlags);
     }
+
+    args.push(prompt);
 
     try {
       const stdout = await this.execCLI(cliPath, args, timeout);

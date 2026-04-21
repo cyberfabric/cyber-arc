@@ -19,5 +19,8 @@
   "dependencies": {
     "@cyber-fabric/fabric-core": "*"
   },
+  "devDependencies": {
+    "@types/node": "^25.6.0"
+  },
   "peerDependencies": {}
 }
