@@ -127,6 +127,11 @@ export class Orchestrator {
   /** Execute a complete pipeline in sequence, tracking state and emitting events. */
   async executePipeline(pipeline: Pipeline): Promise<ExecutionResult> {
     const pipelineStart = Date.now();
+
+    if (pipeline.steps.length === 0) {
+      return { status: "success", outputs: [], duration: 0 };
+    }
+
     const stepStates: StepState[] = pipeline.steps.map((step) => ({
       stepIndex: step.index,
       skillId: step.skillId,
@@ -143,18 +148,18 @@ export class Orchestrator {
     this.emit({ type: "pipeline:start", pipelineId: pipeline.id });
 
     const artifacts: Record<number, readonly ArtifactRef[]> = {};
-    const firstAdapter = this.selectBackend(pipeline.steps[0]);
 
     for (const step of pipeline.steps) {
       // Update step status to running
       this.updateStepState(pipeline.id, step.index, { status: "running", startedAt: new Date().toISOString() });
       this.emit({ type: "step:start", pipelineId: pipeline.id, stepIndex: step.index });
 
+      const stepAdapter = this.selectBackend(step);
       const context: ExecutionContext = {
         pipelineId: pipeline.id,
         currentStep: step.index,
         artifacts,
-        adapterId: firstAdapter?.id ?? ("unknown" as AdapterId),
+        adapterId: stepAdapter?.id ?? ("unknown" as AdapterId),
         parameters: {},
       };
 
@@ -205,9 +210,13 @@ export class Orchestrator {
     return this.states.get(pipelineId);
   }
 
-  /** Subscribe to orchestrator events for observability. */
-  onEvent(listener: OrchestratorEventListener): void {
+  /** Subscribe to orchestrator events for observability. Returns a dispose function to unsubscribe. */
+  onEvent(listener: OrchestratorEventListener): () => void {
     this.listeners.push(listener);
+    return () => {
+      const idx = this.listeners.indexOf(listener);
+      if (idx >= 0) this.listeners.splice(idx, 1);
+    };
   }
 
   private async executeStepWithRetry(
@@ -245,7 +254,11 @@ export class Orchestrator {
 
   private emit(event: OrchestratorEvent): void {
     for (const listener of this.listeners) {
-      listener(event);
+      try {
+        listener(event);
+      } catch {
+        // Listener errors must not disrupt pipeline execution
+      }
     }
   }
 }

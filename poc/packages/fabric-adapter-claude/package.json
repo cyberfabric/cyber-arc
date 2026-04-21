@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test": "echo 'No tests yet'"
+    "test": "echo 'No tests configured' && exit 1"
   },
   "dependencies": {
     "@cyber-fabric/fabric-core": "*"

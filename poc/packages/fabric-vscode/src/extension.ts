@@ -75,7 +75,7 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   // --- Connect Orchestrator events to tree views ------------------------------
-  orchestrator.onEvent((event: OrchestratorEvent) => {
+  const unsubscribe = orchestrator.onEvent((event: OrchestratorEvent) => {
     const state = orchestrator!.getExecutionState(event.pipelineId);
     if (state) {
       planTreeProvider.updateExecutionState(state);
@@ -136,6 +136,7 @@ export function activate(context: vscode.ExtensionContext): void {
     delegationView,
     openPhase,
     cancelDelegation,
+    { dispose: () => unsubscribe() },
     { dispose: () => planTreeProvider.dispose() },
     { dispose: () => delegationViewProvider.dispose() },
   );

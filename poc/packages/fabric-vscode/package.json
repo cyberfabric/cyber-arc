@@ -16,7 +16,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "test": "echo 'No tests yet'"
+    "test": "echo 'No tests configured' && exit 1"
   },
   "engines": {
     "vscode": "^1.85.0"
@@ -85,6 +85,9 @@
   },
   "dependencies": {
     "@cyber-fabric/fabric-core": "*"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0"
   },
   "peerDependencies": {}
 }

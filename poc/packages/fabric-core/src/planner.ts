@@ -10,6 +10,7 @@ import type {
   PipelineStep,
   ValidationResult,
   Result,
+  Planner,
 } from "./types.js";
 import { SkillRegistry } from "./skill-registry.js";
 
@@ -27,23 +28,22 @@ export interface CompatibilityResult {
 /** Outcome of pipeline creation */
 export type PipelineResult = Result<Pipeline, string>;
 
-let pipelineCounter = 0;
-
-function generatePipelineId(): PipelineId {
-  pipelineCounter += 1;
-  return `pipeline-${Date.now()}-${pipelineCounter}` as PipelineId;
-}
-
 /**
  * Pipeline planner that inspects skill IO contracts from the registry,
  * determines compatibility between skills, and assembles them into
  * executable pipelines.
  */
-export class PipelinePlanner {
+export class PipelinePlanner implements Planner {
   private readonly registry: SkillRegistry;
+  private pipelineCounter = 0;
 
   constructor(registry: SkillRegistry) {
     this.registry = registry;
+  }
+
+  private generatePipelineId(): PipelineId {
+    this.pipelineCounter += 1;
+    return `pipeline-${Date.now()}-${this.pipelineCounter}` as PipelineId;
   }
 
   /**
@@ -164,7 +164,7 @@ export class PipelinePlanner {
     const outputs = [...lastSkill.output.produces];
 
     const pipeline: Pipeline = {
-      id: generatePipelineId(),
+      id: this.generatePipelineId(),
       name,
       steps,
       inputs: pipelineInputs,

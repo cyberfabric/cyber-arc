@@ -13,6 +13,9 @@ export { SkillRegistry } from "./skill-registry.js";
 export { PipelinePlanner } from "./planner.js";
 export type { CompatibilityResult, PipelineResult } from "./planner.js";
 
+// Shared prompt builder for adapters
+export { buildTaskPrompt } from "./prompt.js";
+
 // Orchestrator for pipeline execution
 export { Orchestrator } from "./orchestrator.js";
 export type {

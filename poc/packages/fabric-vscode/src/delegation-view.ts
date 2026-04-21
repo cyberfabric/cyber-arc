@@ -114,6 +114,10 @@ export class DelegationViewProvider implements vscode.TreeDataProvider<Delegatio
       if (error) record.error = error;
       this.activeDelegations.delete(id);
       this.history.unshift(record);
+      // Cap history to prevent unbounded memory growth
+      if (this.history.length > 100) {
+        this.history.length = 100;
+      }
     }
     this._onDidChangeTreeData.fire();
   }

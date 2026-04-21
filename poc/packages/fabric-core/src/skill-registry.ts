@@ -95,7 +95,7 @@ export class SkillRegistry {
 
   /**
    * Find skills that can receive artifacts of the given output family as input.
-   * Supports partial matching on family name (e.g. "source" matches "source-code").
+   * Uses exact matching on family name for reliable contract-based routing.
    * Returns an empty array when no matches exist (never throws).
    * @param outputFamily - The output artifact family to find compatible consumers for
    * @returns Array of skills that accept the given family as input
@@ -103,8 +103,7 @@ export class SkillRegistry {
   findCompatible(outputFamily: string): SkillContract[] {
     return this.getAllSkills().filter((skill) =>
       skill.input.accepts.some(
-        (ref: ArtifactRef) =>
-          ref.family === outputFamily || ref.family.includes(outputFamily) || outputFamily.includes(ref.family)
+        (ref: ArtifactRef) => ref.family === outputFamily
       )
     );
   }

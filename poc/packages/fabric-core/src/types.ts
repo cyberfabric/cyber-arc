@@ -211,7 +211,6 @@ export interface Executor {
   /** Execute a complete pipeline */
   executePipeline(
     pipeline: Pipeline,
-    context: ExecutionContext
   ): Promise<ExecutionResult>;
 
   /** Execute a single pipeline step */
@@ -219,9 +218,6 @@ export interface Executor {
     step: PipelineStep,
     context: ExecutionContext
   ): Promise<ExecutionResult>;
-
-  /** Get execution state for a running pipeline */
-  getExecutionState(pipelineId: PipelineId): ExecutionContext | undefined;
 }
 
 // ─── Adapter Types ───────────────────────────────────────────────────

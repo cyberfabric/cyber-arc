@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
+    "build": "npm -w packages/fabric-core run build && npm -w packages/fabric-adapter-claude -w packages/fabric-adapter-codex run build && npm -w packages/fabric-vscode run build",
     "clean": "npm run clean --workspaces",
     "test": "npm run test --workspaces --if-present",
     "lint": "eslint packages/*/src/**/*.ts"
@@ -18,5 +18,8 @@
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.57.0",
     "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-code": "^2.1.116"
   }
 }
