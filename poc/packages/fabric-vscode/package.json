@@ -36,7 +36,7 @@
     ]
   },
   "dependencies": {
-    "@cyber-fabric/fabric-core": "workspace:*"
+    "@cyber-fabric/fabric-core": "*"
   },
   "peerDependencies": {}
 }
