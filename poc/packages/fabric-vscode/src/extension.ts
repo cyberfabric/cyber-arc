@@ -4,6 +4,7 @@
 import * as vscode from "vscode";
 import { Orchestrator, SkillRegistry } from "@cyber-fabric/fabric-core";
 import type { OrchestratorConfig } from "@cyber-fabric/fabric-core";
+import { ChatPanel } from "./chat-panel.js";
 
 let orchestrator: Orchestrator | undefined;
 let outputChannel: vscode.OutputChannel | undefined;
@@ -48,7 +49,16 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   );
 
-  context.subscriptions.push(outputChannel, showStatus, runPipeline);
+  // --- Command: openChat -------------------------------------------------------
+  const openChat = vscode.commands.registerCommand(
+    "cyber-fabric.openChat",
+    () => {
+      ChatPanel.createOrShow(context.extensionUri, orchestrator!);
+      outputChannel!.appendLine("Chat panel opened.");
+    },
+  );
+
+  context.subscriptions.push(outputChannel, showStatus, runPipeline, openChat);
 
   outputChannel.appendLine("Cyber Fabric extension activated.");
 }

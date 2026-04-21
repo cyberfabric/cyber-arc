@@ -23,7 +23,8 @@
   },
   "activationEvents": [
     "onCommand:cyber-fabric.showStatus",
-    "onCommand:cyber-fabric.runPipeline"
+    "onCommand:cyber-fabric.runPipeline",
+    "onCommand:cyber-fabric.openChat"
   ],
   "contributes": {
     "commands": [
@@ -34,6 +35,10 @@
       {
         "command": "cyber-fabric.runPipeline",
         "title": "Cyber Fabric: Run Pipeline"
+      },
+      {
+        "command": "cyber-fabric.openChat",
+        "title": "Cyber Fabric: Open Chat"
       }
     ]
   },
