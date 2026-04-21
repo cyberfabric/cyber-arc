@@ -8,7 +8,5 @@ export { AgentSDKBridge } from "./agent-sdk-bridge.js";
 export type {
   AgentConfig,
   ToolEntry,
-  ClaudeTool,
-  ClaudeAgentResult,
   BridgeSession,
 } from "./agent-sdk-bridge.js";

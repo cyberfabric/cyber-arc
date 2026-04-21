@@ -11,6 +11,8 @@ import type {
   StepStatus,
 } from "@cyber-fabric/fabric-core";
 
+type PipelineStatus = ExecutionState["status"];
+
 /** Tree item representing a pipeline or a pipeline step (phase). */
 export class PlanTreeItem extends vscode.TreeItem {
   constructor(
@@ -36,8 +38,8 @@ export class PlanTreeItem extends vscode.TreeItem {
   }
 }
 
-/** Map a step status to the appropriate VS Code ThemeIcon. */
-function statusToIcon(status: StepStatus): vscode.ThemeIcon {
+/** Map a step or pipeline status to the appropriate VS Code ThemeIcon. */
+function statusToIcon(status: StepStatus | PipelineStatus): vscode.ThemeIcon {
   switch (status) {
     case "completed":
       return new vscode.ThemeIcon("check", new vscode.ThemeColor("testing.iconPassed"));
@@ -45,6 +47,8 @@ function statusToIcon(status: StepStatus): vscode.ThemeIcon {
       return new vscode.ThemeIcon("loading~spin");
     case "failed":
       return new vscode.ThemeIcon("error", new vscode.ThemeColor("testing.iconFailed"));
+    case "partial":
+      return new vscode.ThemeIcon("warning", new vscode.ThemeColor("testing.iconSkipped"));
     case "pending":
     default:
       return new vscode.ThemeIcon("circle-outline");
@@ -108,7 +112,7 @@ export class PlanTreeProvider implements vscode.TreeDataProvider<PlanTreeItem> {
         this.pipeline.name,
         vscode.TreeItemCollapsibleState.Expanded,
       );
-      root.iconPath = statusToIcon(pipelineStatus as StepStatus);
+      root.iconPath = statusToIcon(pipelineStatus);
       root.description = `${this.pipeline.steps.length} phases`;
       root.contextValue = "pipeline";
       return [root];

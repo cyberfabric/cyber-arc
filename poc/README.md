@@ -43,7 +43,7 @@ The orchestrator never calls LLM APIs directly. All execution is delegated throu
 - TypeScript >= 5.4
 
 Optional (for agent execution):
-- `@anthropic-ai/claude-code` npm package (for Claude adapter)
+- `claude` CLI on PATH (for Claude adapter — install via `npm install -g @anthropic-ai/claude-code`)
 - `codex` CLI on PATH (for Codex adapter)
 
 ## Setup
@@ -83,13 +83,13 @@ If no agent credentials are configured, the demo handles this gracefully and sho
 
 ### Claude Adapter
 
-The Claude adapter requires the `@anthropic-ai/claude-code` package:
+The Claude adapter invokes the `claude` CLI as a subprocess. Install it globally:
 
 ```bash
-npm install @anthropic-ai/claude-code
+npm install -g @anthropic-ai/claude-code
 ```
 
-The adapter uses dynamic import, so it remains optional.
+If `claude` is not on PATH, `isAvailable()` returns false and the adapter is skipped.
 
 ### Codex Adapter
 

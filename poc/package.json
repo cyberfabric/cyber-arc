@@ -19,7 +19,5 @@
     "eslint": "^8.57.0",
     "typescript": "^5.4.0"
   },
-  "dependencies": {
-    "@anthropic-ai/claude-code": "^2.1.116"
-  }
+  "dependencies": {}
 }

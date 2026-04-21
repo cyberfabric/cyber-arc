@@ -1,10 +1,9 @@
-// AgentSDKBridge — wraps the Claude Agent SDK for Fabric adapter use.
-// Handles agent creation, execution, tool conversion, and result mapping.
+// AgentSDKBridge — wraps the Claude CLI for Fabric adapter use.
+// Handles agent creation, execution via subprocess, and result mapping.
 
+import { spawn } from "child_process";
 import type {
   ExecutionResult,
-  SkillInstance,
-  ExecutionContext,
   ArtifactRef,
 } from "@cyber-fabric/fabric-core";
 
@@ -14,30 +13,17 @@ export interface AgentConfig {
   readonly model: string;
   /** System prompt for the agent */
   readonly systemPrompt: string;
-  /** Tool definitions in Fabric format */
+  /** Tool definitions in Fabric format (not used with CLI) */
   readonly tools?: readonly ToolEntry[];
-  /** Maximum tokens for agent response */
+  /** Maximum tokens for agent response (not used with CLI) */
   readonly maxTokens?: number;
 }
 
-/** A tool entry in Fabric-neutral format, converted to Claude format by the bridge. */
+/** A tool entry in Fabric-neutral format. */
 export interface ToolEntry {
   readonly name: string;
   readonly description: string;
   readonly inputSchema: Record<string, unknown>;
-}
-
-/** Represents a Claude tool definition in SDK format. */
-export interface ClaudeTool {
-  readonly name: string;
-  readonly description: string;
-  readonly input_schema: Record<string, unknown>;
-}
-
-/** Raw result from the Claude Agent SDK before conversion. */
-export interface ClaudeAgentResult {
-  readonly messages: readonly Record<string, unknown>[];
-  readonly toolOutputs?: readonly Record<string, unknown>[];
 }
 
 /** Tracks a running agent session within the bridge. */
@@ -48,13 +34,28 @@ export interface BridgeSession {
   active: boolean;
 }
 
+/** JSON output from Claude CLI with --output-format json */
+interface ClaudeCLIResult {
+  type: string;
+  subtype?: string;
+  session_id?: string;
+  result?: string;
+  is_error?: boolean;
+  duration_ms?: number;
+  duration_api_ms?: number;
+  num_turns?: number;
+  cost_usd?: number;
+  total_cost_usd?: number;
+}
+
 /**
- * Bridge between Fabric adapter layer and the Claude Agent SDK.
- * Encapsulates all SDK-specific logic so the adapter remains thin.
+ * Bridge between Fabric adapter layer and the Claude CLI.
+ * Invokes claude command as subprocess for execution.
  */
 export class AgentSDKBridge {
   private readonly sessions = new Map<string, BridgeSession>();
   private sessionCounter = 0;
+  private cliAvailable: boolean | null = null;
 
   /**
    * Create a new agent session with the given configuration.
@@ -75,7 +76,7 @@ export class AgentSDKBridge {
 
   /**
    * Run an agent session with a task prompt.
-   * Delegates to the Claude Agent SDK to execute the task.
+   * Invokes the Claude CLI as a subprocess.
    * @param session - The bridge session to run
    * @param taskPrompt - The task description for the agent
    * @returns The execution result in Fabric format
@@ -95,27 +96,28 @@ export class AgentSDKBridge {
     const start = Date.now();
 
     try {
-      // Attempt dynamic import of Claude Agent SDK
-      const sdk = await this.loadSDK();
-      if (!sdk) {
+      const available = await this.isSDKAvailable();
+      if (!available) {
         return {
           status: "failure",
           error:
-            "Claude Agent SDK not available. Install @anthropic-ai/claude-code to use the Claude adapter.",
+            "Claude CLI not available. Install @anthropic-ai/claude-code globally: npm install -g @anthropic-ai/claude-code",
           duration: Date.now() - start,
         };
       }
 
-      const claudeTools = this.convertTools(session.config.tools ?? []);
+      const result = await this.invokeCLI(session.config, taskPrompt);
 
-      const agent = new sdk.Agent({
-        model: session.config.model,
-        tools: claudeTools,
-        systemPrompt: session.config.systemPrompt,
-      });
-
-      const rawResult = await agent.run(taskPrompt);
-      return this.convertResult(rawResult, Date.now() - start);
+      return {
+        status: "success",
+        outputs: result.artifacts,
+        duration: Date.now() - start,
+        metadata: {
+          outputText: result.text,
+          numTurns: result.numTurns,
+          costUsd: result.costUsd,
+        },
+      };
     } catch (err) {
       return {
         status: "failure",
@@ -126,61 +128,93 @@ export class AgentSDKBridge {
   }
 
   /**
-   * Convert Fabric tool definitions to Claude Agent SDK format.
-   * @param tools - Fabric-format tool definitions
-   * @returns Claude SDK tool definitions
+   * Invoke the Claude CLI with the given config and prompt.
    */
-  convertTools(tools: readonly ToolEntry[]): ClaudeTool[] {
-    return tools.map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      input_schema: tool.inputSchema,
-    }));
+  private async invokeCLI(
+    config: AgentConfig,
+    taskPrompt: string
+  ): Promise<{ text: string; artifacts: ArtifactRef[]; numTurns?: number; costUsd?: number }> {
+    return new Promise((resolve, reject) => {
+      const args = [
+        "--print",
+        "--output-format", "json",
+        "--model", config.model,
+        "--system-prompt", config.systemPrompt,
+        taskPrompt,
+      ];
+
+      const proc = spawn("claude", args, {
+        stdio: ["pipe", "pipe", "pipe"],
+        env: { ...process.env },
+      });
+
+      let stdout = "";
+      let stderr = "";
+
+      proc.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      proc.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      proc.on("close", (code) => {
+        if (code !== 0) {
+          reject(new Error(`Claude CLI exited with code ${code}: ${stderr || stdout}`));
+          return;
+        }
+
+        try {
+          const result = this.parseJSONOutput(stdout);
+          resolve(result);
+        } catch (err) {
+          reject(new Error(`Failed to parse Claude CLI output: ${err}`));
+        }
+      });
+
+      proc.on("error", (err) => {
+        reject(new Error(`Failed to spawn Claude CLI: ${err.message}`));
+      });
+    });
   }
 
   /**
-   * Convert a raw Claude Agent SDK result into a Fabric ExecutionResult.
-   * @param raw - The raw result from the Claude Agent SDK
-   * @param duration - Elapsed time in milliseconds
-   * @returns A Fabric-compatible ExecutionResult
+   * Parse JSON output from Claude CLI.
+   * The CLI outputs newline-delimited JSON objects.
    */
-  convertResult(raw: ClaudeAgentResult, duration: number): ExecutionResult {
-    // Extract text content from messages
+  private parseJSONOutput(output: string): { text: string; artifacts: ArtifactRef[]; numTurns?: number; costUsd?: number } {
+    const lines = output.trim().split("\n").filter(Boolean);
     const textParts: string[] = [];
-    for (const msg of raw.messages) {
-      if (typeof msg["content"] === "string") {
-        textParts.push(msg["content"]);
-      } else if (Array.isArray(msg["content"])) {
-        for (const block of msg["content"] as Record<string, unknown>[]) {
-          if (block["type"] === "text" && typeof block["text"] === "string") {
-            textParts.push(block["text"] as string);
+    const artifacts: ArtifactRef[] = [];
+    let numTurns: number | undefined;
+    let costUsd: number | undefined;
+
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line) as ClaudeCLIResult;
+
+        if (obj.type === "result" && obj.result) {
+          textParts.push(obj.result);
+          numTurns = obj.num_turns;
+          costUsd = obj.total_cost_usd;
+        } else if (obj.type === "assistant" && obj.subtype === "text") {
+          // Handle streaming text blocks if present
+          const content = (obj as unknown as Record<string, unknown>)["content"];
+          if (typeof content === "string") {
+            textParts.push(content);
           }
         }
-      }
-    }
-
-    // Extract artifact references from tool outputs
-    const artifacts: ArtifactRef[] = [];
-    if (raw.toolOutputs) {
-      for (const output of raw.toolOutputs) {
-        if (typeof output["path"] === "string") {
-          artifacts.push({
-            family: (output["family"] as string) ?? "unknown",
-            format: (output["format"] as string) ?? "text/plain",
-            path: output["path"] as string,
-          });
-        }
+      } catch {
+        // Skip non-JSON lines
       }
     }
 
     return {
-      status: "success",
-      outputs: artifacts,
-      duration,
-      metadata: {
-        messageCount: raw.messages.length,
-        outputText: textParts.join("\n"),
-      },
+      text: textParts.join("\n"),
+      artifacts,
+      numTurns,
+      costUsd,
     };
   }
 
@@ -197,12 +231,47 @@ export class AgentSDKBridge {
   }
 
   /**
-   * Check if the Claude Agent SDK is available in the environment.
-   * @returns true if the SDK can be loaded
+   * Check if the Claude CLI is available.
+   * @returns true if the CLI can be invoked
    */
   async isSDKAvailable(): Promise<boolean> {
-    const sdk = await this.loadSDK();
-    return sdk !== null;
+    if (this.cliAvailable !== null) {
+      return this.cliAvailable;
+    }
+
+    try {
+      const result = await this.checkCLI();
+      this.cliAvailable = result;
+      return result;
+    } catch {
+      this.cliAvailable = false;
+      return false;
+    }
+  }
+
+  /**
+   * Check if claude CLI is available by running --version.
+   */
+  private checkCLI(): Promise<boolean> {
+    return new Promise((resolve) => {
+      const proc = spawn("claude", ["--version"], {
+        stdio: ["pipe", "pipe", "pipe"],
+      });
+
+      proc.on("close", (code) => {
+        resolve(code === 0);
+      });
+
+      proc.on("error", () => {
+        resolve(false);
+      });
+
+      // Timeout after 5 seconds
+      setTimeout(() => {
+        proc.kill();
+        resolve(false);
+      }, 5000);
+    });
   }
 
   /**
@@ -212,24 +281,5 @@ export class AgentSDKBridge {
    */
   getSession(sessionId: string): BridgeSession | undefined {
     return this.sessions.get(sessionId);
-  }
-
-  /**
-   * Attempt to dynamically load the Claude Agent SDK.
-   * Returns null if the SDK is not installed.
-   */
-  private async loadSDK(): Promise<{ Agent: new (config: Record<string, unknown>) => { run(prompt: string): Promise<ClaudeAgentResult> } } | null> {
-    try {
-      // Dynamic import so the adapter works without the SDK installed
-      // (it will just report unavailable)
-      // @ts-expect-error — SDK may not be installed; absence is handled gracefully
-      const mod = await import("@anthropic-ai/claude-code");
-      if (mod && typeof mod.Agent === "function") {
-        return mod as { Agent: new (config: Record<string, unknown>) => { run(prompt: string): Promise<ClaudeAgentResult> } };
-      }
-      return null;
-    } catch {
-      return null;
-    }
   }
 }

@@ -60,7 +60,7 @@ export class ChatPanel {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
-        localResourceRoots: [vscode.Uri.joinPath(extensionUri, "src", "webview")],
+        localResourceRoots: [vscode.Uri.joinPath(extensionUri, "dist", "webview")],
       },
     );
 
@@ -142,16 +142,19 @@ export class ChatPanel {
   /** Build the webview HTML content with nonce-based CSP. */
   private getWebviewContent(): string {
     const nonce = getNonce();
-
-    // Try to load the external HTML template, falling back to inline HTML
     const htmlPath = path.join(
       this.extensionUri.fsPath,
-      "src",
+      "dist",
       "webview",
       "chat.html",
     );
 
-    const htmlTemplate = fs.readFileSync(htmlPath, "utf-8");
-    return htmlTemplate.replace(/\{\{nonce\}\}/g, nonce);
+    try {
+      const htmlTemplate = fs.readFileSync(htmlPath, "utf-8");
+      return htmlTemplate.replace(/\{\{nonce\}\}/g, nonce);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return `<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';"><title>Cyber Fabric Chat</title></head><body><h2>Cyber Fabric Chat</h2><p>Failed to load chat template.</p><pre>${msg.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c] as string))}</pre></body></html>`;
+    }
   }
 }

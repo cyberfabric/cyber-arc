@@ -7,6 +7,7 @@ import type {
   ArtifactRef,
   ExecutionContext,
   ExecutionResult,
+  Executor,
   Pipeline,
   PipelineId,
   PipelineStep,
@@ -47,7 +48,7 @@ export type OrchestratorEventListener = (event: OrchestratorEvent) => void;
  * Central Fabric orchestrator. Executes pipelines by delegating step execution
  * to registered adapters. Never calls LLM APIs directly.
  */
-export class Orchestrator {
+export class Orchestrator implements Executor {
   private readonly adapters = new Map<string, AdapterContract>();
   private readonly states = new Map<string, ExecutionState>();
   private readonly listeners: OrchestratorEventListener[] = [];
@@ -253,7 +254,8 @@ export class Orchestrator {
   }
 
   private emit(event: OrchestratorEvent): void {
-    for (const listener of this.listeners) {
+    // Snapshot to avoid skipping listeners when one disposes itself mid-emit.
+    for (const listener of [...this.listeners]) {
       try {
         listener(event);
       } catch {

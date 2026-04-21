@@ -14,7 +14,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"const f=require('fs'),p=require('path');const s=p.join('src','webview'),d=p.join('dist','webview');f.mkdirSync(d,{recursive:true});for(const e of f.readdirSync(s))f.copyFileSync(p.join(s,e),p.join(d,e));\"",
     "clean": "rm -rf dist",
     "test": "echo 'No tests configured' && exit 1"
   },

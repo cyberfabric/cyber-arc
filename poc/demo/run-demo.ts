@@ -127,7 +127,7 @@ async function main(): Promise<void> {
     log("ADAPTERS", "without the Claude Agent SDK or Codex CLI installed.");
     log("ADAPTERS", "");
     log("ADAPTERS", "To enable Claude adapter:");
-    log("ADAPTERS", "  npm install @anthropic-ai/claude-code");
+    log("ADAPTERS", "  npm install -g @anthropic-ai/claude-code");
     log("ADAPTERS", "");
     log("ADAPTERS", "To enable Codex adapter:");
     log("ADAPTERS", "  Ensure 'codex' CLI is on your PATH");
