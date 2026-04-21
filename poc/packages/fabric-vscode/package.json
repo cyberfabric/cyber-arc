@@ -1,7 +1,9 @@
 {
   "name": "@cyber-fabric/fabric-vscode",
+  "displayName": "Cyber Fabric",
+  "publisher": "cyber-fabric",
   "version": "0.1.0",
-  "description": "VS Code extension with chat panel and plan tree",
+  "description": "VS Code extension for Cyber Fabric — chat panel, plan tree, and orchestrator integration",
   "type": "module",
   "main": "dist/extension.js",
   "types": "dist/extension.d.ts",
