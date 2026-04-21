@@ -1,0 +1,23 @@
+{
+  "name": "@cyber-fabric/fabric-adapter-claude",
+  "version": "0.1.0",
+  "description": "Claude Agent SDK integration adapter",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "echo 'No tests yet'"
+  },
+  "dependencies": {
+    "@cyber-fabric/fabric-core": "workspace:*"
+  },
+  "peerDependencies": {}
+}

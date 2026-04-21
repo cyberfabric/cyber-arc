@@ -1,0 +1,42 @@
+{
+  "name": "@cyber-fabric/fabric-vscode",
+  "version": "0.1.0",
+  "description": "VS Code extension with chat panel and plan tree",
+  "type": "module",
+  "main": "dist/extension.js",
+  "types": "dist/extension.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/extension.d.ts",
+      "import": "./dist/extension.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rm -rf dist",
+    "test": "echo 'No tests yet'"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "activationEvents": [
+    "onCommand:cyber-fabric.showStatus",
+    "onCommand:cyber-fabric.runPipeline"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "cyber-fabric.showStatus",
+        "title": "Cyber Fabric: Show Status"
+      },
+      {
+        "command": "cyber-fabric.runPipeline",
+        "title": "Cyber Fabric: Run Pipeline"
+      }
+    ]
+  },
+  "dependencies": {
+    "@cyber-fabric/fabric-core": "workspace:*"
+  },
+  "peerDependencies": {}
+}
