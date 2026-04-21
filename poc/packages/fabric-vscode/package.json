@@ -24,7 +24,9 @@
   "activationEvents": [
     "onCommand:cyber-fabric.showStatus",
     "onCommand:cyber-fabric.runPipeline",
-    "onCommand:cyber-fabric.openChat"
+    "onCommand:cyber-fabric.openChat",
+    "onView:cyberFabric.planTree",
+    "onView:cyberFabric.delegationStatus"
   ],
   "contributes": {
     "commands": [
@@ -39,8 +41,47 @@
       {
         "command": "cyber-fabric.openChat",
         "title": "Cyber Fabric: Open Chat"
+      },
+      {
+        "command": "cyber-fabric.openPhase",
+        "title": "Cyber Fabric: Open Phase Details"
+      },
+      {
+        "command": "cyber-fabric.cancelDelegation",
+        "title": "Cyber Fabric: Cancel Delegation",
+        "icon": "$(close)"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "cyberFabric",
+          "title": "Cyber Fabric",
+          "icon": "$(circuit-board)"
+        }
+      ]
+    },
+    "views": {
+      "cyberFabric": [
+        {
+          "id": "cyberFabric.planTree",
+          "name": "Plan Phases"
+        },
+        {
+          "id": "cyberFabric.delegationStatus",
+          "name": "Delegation Status"
+        }
+      ]
+    },
+    "menus": {
+      "view/item/context": [
+        {
+          "command": "cyber-fabric.cancelDelegation",
+          "when": "viewItem == activeDelegation",
+          "group": "inline"
+        }
+      ]
+    }
   },
   "dependencies": {
     "@cyber-fabric/fabric-core": "*"
