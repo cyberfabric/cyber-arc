@@ -26,8 +26,25 @@
         { "id": "fabric.agents", "name": "Agents" }
       ]
     },
-    "commands": [],
-    "menus": {}
+    "commands": [
+      { "command": "fabric.marketplace.add",     "title": "Fabric: Add Marketplace…" },
+      { "command": "fabric.marketplace.remove",  "title": "Fabric: Remove Marketplace" },
+      { "command": "fabric.marketplace.refresh", "title": "Fabric: Refresh Marketplaces" }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fabric.marketplace.refresh",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        },
+        {
+          "command": "fabric.marketplace.add",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run build",

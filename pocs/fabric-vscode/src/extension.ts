@@ -3,6 +3,7 @@ import { KitsTreeDataProvider } from './ui/kitsView';
 import { StoreTreeDataProvider } from './ui/storeView';
 import { AgentsTreeDataProvider } from './ui/agentsView';
 import { logInfo } from './output';
+import { registerMarketplaceCommands } from './commands/marketplace';
 
 export function activate(context: vscode.ExtensionContext): void {
   logInfo('fabric extension activated');
@@ -16,6 +17,8 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.registerTreeDataProvider('fabric.store', storeProvider),
     vscode.window.registerTreeDataProvider('fabric.agents', agentsProvider),
   );
+
+  registerMarketplaceCommands(context);
 }
 
 export function deactivate(): void {}
