@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import fabric from '../../fabricLib';
 import { useMockState } from '../../hooks/useMockState';
+import InstallKitDialog from '../install/InstallKitDialog';
 import type { InstalledKit } from '../../types';
 
 export default function KitsView(): JSX.Element {
@@ -7,15 +9,22 @@ export default function KitsView(): JSX.Element {
   const all = fabric.kits.list({ scope: 'both' });
   const project = all.filter((k) => k.scope === 'project');
   const user = all.filter((k) => k.scope === 'global');
+  const [showInstallUrl, setShowInstallUrl] = useState(false);
 
   return (
     <section className="view">
-      <h1 className="view__title">My Kits</h1>
+      <div className="view__header-row">
+        <h1 className="view__title">My Kits</h1>
+        <button type="button" className="btn" onClick={() => setShowInstallUrl(true)}>Install from URL…</button>
+      </div>
       {all.length === 0 && (
         <p className="view__hint">No kits installed. Open the Store to browse and install.</p>
       )}
       {project.length > 0 && <Group label="Workspace" kits={project} />}
       {user.length > 0 && <Group label="User" kits={user} />}
+      {showInstallUrl && (
+        <InstallKitDialog source={{ kind: 'url' }} onClose={() => setShowInstallUrl(false)} />
+      )}
     </section>
   );
 }

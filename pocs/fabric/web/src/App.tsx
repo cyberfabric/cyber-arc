@@ -7,6 +7,7 @@ import KitsView from './ui/views/KitsView';
 import StoreView from './ui/views/StoreView';
 import AgentsView from './ui/views/AgentsView';
 import ExtensionView from './ui/views/ExtensionView';
+import ToastHost from './ui/toast/ToastHost';
 import type { InstalledKit, WebExtension } from './types';
 
 const CORE_ENTRIES: SidebarEntry[] = [
@@ -95,6 +96,7 @@ export default function App(): JSX.Element {
             : renderCore(activeId)}
         </main>
       </div>
+      <ToastHost />
     </div>
   );
 }

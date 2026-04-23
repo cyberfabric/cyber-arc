@@ -1,11 +1,15 @@
+import { useState } from 'react';
 import fabric from '../../fabricLib';
 import { useMockState } from '../../hooks/useMockState';
 import { state } from '../../mock/state';
+import InstallKitDialog, { type InstallSource } from '../install/InstallKitDialog';
+import { notify } from '../toast/toast';
 import type { Marketplace, MarketplaceKit } from '../../types';
 
 export default function StoreView(): JSX.Element {
   useMockState(['marketplaces', 'ui']);
   const mkts = fabric.marketplaces.list();
+  const [installSource, setInstallSource] = useState<InstallSource | null>(null);
 
   return (
     <section className="view">
@@ -24,13 +28,26 @@ export default function StoreView(): JSX.Element {
         <p className="view__hint">No marketplaces added yet. Use «Add Marketplace…» (next task).</p>
       )}
       {mkts.map((m) => (
-        <MarketplaceBlock key={m.name} mkt={m} />
+        <MarketplaceBlock
+          key={m.name}
+          mkt={m}
+          onInstall={(kit) => {
+            if (kit.broken) {
+              notify.error(`Cannot install ${kit.name}: ${kit.broken.reason}`);
+              return;
+            }
+            setInstallSource({ kind: 'store', marketplace: m.name, kitName: kit.name, version: kit.version });
+          }}
+        />
       ))}
+      {installSource && (
+        <InstallKitDialog source={installSource} onClose={() => setInstallSource(null)} />
+      )}
     </section>
   );
 }
 
-function MarketplaceBlock({ mkt }: { mkt: Marketplace }): JSX.Element {
+function MarketplaceBlock({ mkt, onInstall }: { mkt: Marketplace; onInstall: (kit: MarketplaceKit) => void }): JSX.Element {
   const visible = mkt.kits.filter((k) => state.includePrereleases || !isPrerelease(k.version));
   return (
     <div className="group">
@@ -39,13 +56,13 @@ function MarketplaceBlock({ mkt }: { mkt: Marketplace }): JSX.Element {
         <span className="group__sub">{mkt.description}</span>
       </div>
       <ul className="group__list">
-        {visible.map((kit) => <StoreKitRow key={kit.name} mkt={mkt} kit={kit} />)}
+        {visible.map((kit) => <StoreKitRow key={kit.name} kit={kit} onInstall={() => onInstall(kit)} />)}
       </ul>
     </div>
   );
 }
 
-function StoreKitRow({ mkt: _mkt, kit }: { mkt: Marketplace; kit: MarketplaceKit }): JSX.Element {
+function StoreKitRow({ kit, onInstall }: { kit: MarketplaceKit; onInstall: () => void }): JSX.Element {
   const pre = isPrerelease(kit.version);
   const broken = !!kit.broken;
   return (
@@ -61,6 +78,7 @@ function StoreKitRow({ mkt: _mkt, kit }: { mkt: Marketplace; kit: MarketplaceKit
         <span className="badge">{kit.category}</span>
         {pre && <span className="badge badge--warn">pre-release</span>}
         {broken && <span className="badge badge--danger">broken</span>}
+        <button type="button" className="btn btn--compact" onClick={onInstall}>Install</button>
       </div>
     </li>
   );
