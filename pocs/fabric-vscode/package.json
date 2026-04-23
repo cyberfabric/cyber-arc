@@ -30,7 +30,9 @@
       { "command": "fabric.marketplace.add",     "title": "Fabric: Add Marketplace…" },
       { "command": "fabric.marketplace.remove",  "title": "Fabric: Remove Marketplace" },
       { "command": "fabric.marketplace.refresh", "title": "Fabric: Refresh Marketplaces" },
-      { "command": "fabric.store.togglePrereleases", "title": "Fabric: Toggle Pre-releases in Store" }
+      { "command": "fabric.store.togglePrereleases", "title": "Fabric: Toggle Pre-releases in Store" },
+      { "command": "fabric.kit.installFromUrl",   "title": "Fabric: Install Kit from URL" },
+      { "command": "fabric.kit.installFromStore", "title": "Fabric: Install Kit from Store" }
     ],
     "menus": {
       "view/title": [
@@ -48,6 +50,18 @@
           "command": "fabric.store.togglePrereleases",
           "when": "view == fabric.store",
           "group": "navigation"
+        },
+        {
+          "command": "fabric.kit.installFromUrl",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fabric.kit.installFromStore",
+          "when": "view == fabric.store && viewItem == fabric.marketplace.kit",
+          "group": "inline"
         }
       ]
     }
