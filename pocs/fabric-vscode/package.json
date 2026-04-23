@@ -35,7 +35,9 @@
       { "command": "fabric.kit.installFromStore", "title": "Fabric: Install Kit from Store" },
       { "command": "fabric.kit.update",          "title": "Fabric: Update Kit…" },
       { "command": "fabric.kit.simulateUpgrade", "title": "Fabric PoC: Simulate Marketplace Upgrade" },
-      { "command": "fabric.kit.uninstall", "title": "Fabric: Uninstall Kit…" }
+      { "command": "fabric.kit.uninstall", "title": "Fabric: Uninstall Kit…" },
+      { "command": "fabric.agent.register",   "title": "Fabric: Register Agents…" },
+      { "command": "fabric.agent.unregister", "title": "Fabric: Unregister Agents…" }
     ],
     "menus": {
       "view/title": [
@@ -58,6 +60,11 @@
           "command": "fabric.kit.installFromUrl",
           "when": "view == fabric.store",
           "group": "navigation"
+        },
+        {
+          "command": "fabric.agent.register",
+          "when": "view == fabric.agents",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -75,6 +82,16 @@
           "command": "fabric.kit.uninstall",
           "when": "view == fabric.kits && viewItem =~ /fabric.kit./",
           "group": "uninstall"
+        },
+        {
+          "command": "fabric.agent.register",
+          "when": "view == fabric.agents && viewItem == fabric.agent.unregistered",
+          "group": "inline"
+        },
+        {
+          "command": "fabric.agent.unregister",
+          "when": "view == fabric.agents && viewItem == fabric.agent.registered",
+          "group": "inline"
         }
       ]
     }

@@ -6,6 +6,7 @@ import { logInfo } from './output';
 import { registerMarketplaceCommands } from './commands/marketplace';
 import { registerUiCommands } from './commands/ui';
 import { registerKitCommands } from './commands/kit';
+import { registerAgentCommands } from './commands/agent';
 
 export function activate(context: vscode.ExtensionContext): void {
   logInfo('fabric extension activated');
@@ -23,6 +24,7 @@ export function activate(context: vscode.ExtensionContext): void {
   registerMarketplaceCommands(context);
   registerUiCommands(context);
   registerKitCommands(context);
+  registerAgentCommands(context);
 }
 
 export function deactivate(): void {}
