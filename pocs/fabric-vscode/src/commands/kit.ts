@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import fabric from '../fabricLib';
 import { runSafely } from '../errors';
 import { logInfo } from '../output';
-import type { InstalledKit, Marketplace, Scope } from '../types';
+import type { InstalledKit, Scope } from '../types';
 
 export function registerKitCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
@@ -54,8 +54,8 @@ async function installFromUrl(): Promise<void> {
   });
 }
 
-async function installFromStore(marketplace: Marketplace, kitName: string): Promise<void> {
-  if (!marketplace || !kitName) {
+async function installFromStore(marketplaceName: string, kitName: string): Promise<void> {
+  if (!marketplaceName || !kitName) {
     await vscode.window.showErrorMessage('Install from Store requires a marketplace and a kit name');
     return;
   }
@@ -68,10 +68,10 @@ async function installFromStore(marketplace: Marketplace, kitName: string): Prom
       async () => {
         await sleep(400);
         const kit = fabric.kits.install({
-          source: { marketplace: marketplace.name, kit: kitName },
+          source: { marketplace: marketplaceName, kit: kitName },
           scope,
         });
-        logInfo(`Installed ${kit.name} ${kit.version} at ${scope} from ${marketplace.name}`);
+        logInfo(`Installed ${kit.name} ${kit.version} at ${scope} from ${marketplaceName}`);
         await vscode.window.showInformationMessage(`Installed ${kit.name} ${kit.version}`);
       },
     );
