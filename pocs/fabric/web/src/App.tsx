@@ -67,6 +67,17 @@ function iconFor(name?: string): string {
 
 export default function App(): JSX.Element {
   useMockState(['kits', 'marketplaces']);
+
+  useEffect(() => {
+    if (fabric.marketplaces.list().length > 0) return;
+    try {
+      const mk = fabric.marketplaces.add('cyber-fabric-official');
+      console.log(`[fabric-web] seeded default marketplace: ${mk.name} (${mk.kits.length} kits)`);
+    } catch (err) {
+      console.warn('[fabric-web] failed to seed default marketplace', err);
+    }
+  }, []);
+
   const [activeId, setActiveId] = useState<string>('overview');
 
   const extensionEntries = useMemo(() => collectExtensionEntries(), [fabric.kits.list({ scope: 'both' }).length, fabric.marketplaces.list().length]);
