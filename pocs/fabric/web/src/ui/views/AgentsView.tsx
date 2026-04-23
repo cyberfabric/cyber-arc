@@ -1,18 +1,27 @@
+import { useState } from 'react';
 import fabric from '../../fabricLib';
 import { useMockState } from '../../hooks/useMockState';
+import RegisterAgentsDialog from '../agents/RegisterAgentsDialog';
 import type { AgentInfo } from '../../types';
 
 export default function AgentsView(): JSX.Element {
   useMockState(['agents', 'kits']);
   const agents = fabric.agents.list();
+  const [mode, setMode] = useState<'register' | 'unregister' | null>(null);
 
   return (
     <section className="view">
-      <h1 className="view__title">Agents</h1>
-      <p className="view__hint">Registration actions come in the next task. For now this view is read-only.</p>
+      <div className="view__header-row">
+        <h1 className="view__title">Agents</h1>
+        <div className="button-row">
+          <button type="button" className="btn" onClick={() => setMode('unregister')} disabled={!agents.some((a) => a.registered)}>Unregister…</button>
+          <button type="button" className="btn btn--primary" onClick={() => setMode('register')} disabled={!agents.some((a) => a.detected)}>Register Agents…</button>
+        </div>
+      </div>
       <ul className="group__list">
         {agents.map((a) => <AgentRow key={a.id} agent={a} />)}
       </ul>
+      {mode && <RegisterAgentsDialog mode={mode} onClose={() => setMode(null)} />}
     </section>
   );
 }

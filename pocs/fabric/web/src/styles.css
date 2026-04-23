@@ -177,3 +177,15 @@ button { font: inherit; color: inherit; }
 .diff-added .diff__sign   { color: var(--success); }
 .diff-removed .diff__sign { color: var(--danger); }
 .diff-changed .diff__sign { color: var(--warn); }
+
+.btn--danger { background: var(--danger); border-color: var(--danger); color: white; }
+.btn--danger:hover { background: color-mix(in srgb, var(--danger) 90%, white); }
+.btn--danger-outline { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 50%, var(--border)); }
+.btn--danger-outline:hover { background: color-mix(in srgb, var(--danger) 12%, var(--bg-elev-2)); }
+
+.checklist { list-style: none; margin: 0; padding: 0; max-height: 180px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.checklist__item { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.checklist__item:last-child { border-bottom: 0; }
+.checklist__item label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.checklist__label { flex: 1; }
+.checklist__meta { color: var(--fg-muted); font-size: 11px; }
