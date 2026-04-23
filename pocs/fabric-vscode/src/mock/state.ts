@@ -5,7 +5,7 @@ import type {
   Marketplace,
 } from '../types';
 
-export type StateChannel = 'kits' | 'marketplaces' | 'agents' | 'cli';
+export type StateChannel = 'kits' | 'marketplaces' | 'agents' | 'cli' | 'ui';
 
 class MockState {
   installedKits: InstalledKit[] = [];
@@ -18,6 +18,7 @@ class MockState {
   cliDetected = true;
   cliVersion: string | undefined = '0.2.0';
   cliPath: string | undefined = '/usr/local/bin/fabric';
+  includePrereleases = false;
 
   private emitter = new EventEmitter();
 
@@ -41,7 +42,8 @@ class MockState {
     this.cliDetected = true;
     this.cliVersion = '0.2.0';
     this.cliPath = '/usr/local/bin/fabric';
-    (['kits', 'marketplaces', 'agents', 'cli'] as StateChannel[]).forEach((c) => this.emit(c));
+    this.includePrereleases = false;
+    (['kits', 'marketplaces', 'agents', 'cli', 'ui'] as StateChannel[]).forEach((c) => this.emit(c));
   }
 }
 
