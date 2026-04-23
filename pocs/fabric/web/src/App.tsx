@@ -8,6 +8,7 @@ import StoreView from './ui/views/StoreView';
 import AgentsView from './ui/views/AgentsView';
 import ExtensionView from './ui/views/ExtensionView';
 import ToastHost from './ui/toast/ToastHost';
+import CliStatus from './ui/cli/CliStatus';
 import type { InstalledKit, WebExtension } from './types';
 
 const CORE_ENTRIES: SidebarEntry[] = [
@@ -87,6 +88,16 @@ export default function App(): JSX.Element {
       <header className="app__header">
         <span className="app__brand">Fabric</span>
         <span className="app__tag">PoC · mock</span>
+        <span className="app__spacer" />
+        <button
+          type="button"
+          className="app__action"
+          onClick={() => fabric.system.toggleCli()}
+          title="PoC helper: flip CLI detection"
+        >
+          Toggle CLI
+        </button>
+        <CliStatus />
       </header>
       <div className="app__body">
         <Sidebar entries={entries} activeId={activeId} onSelect={setActiveId} />
