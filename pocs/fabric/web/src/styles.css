@@ -101,3 +101,11 @@ button { font: inherit; color: inherit; }
 .badge--danger { background: color-mix(in srgb, var(--danger) 30%, var(--bg-elev-2)); color: var(--fg); }
 .badge--success { background: color-mix(in srgb, var(--success) 30%, var(--bg-elev-2)); color: var(--fg); }
 .badge--muted { opacity: 0.6; }
+
+.ext-placeholder {
+  margin-top: 12px; padding: 14px 16px;
+  border: 1px dashed var(--border); border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 6%, var(--bg));
+}
+.ext-placeholder__list { margin: 10px 0 0 18px; color: var(--fg-muted); }
+.ext-placeholder__list li { margin-bottom: 4px; }
