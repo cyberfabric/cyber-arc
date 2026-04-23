@@ -37,7 +37,9 @@
       { "command": "fabric.kit.simulateUpgrade", "title": "Fabric PoC: Simulate Marketplace Upgrade" },
       { "command": "fabric.kit.uninstall", "title": "Fabric: Uninstall Kit…" },
       { "command": "fabric.agent.register",   "title": "Fabric: Register Agents…" },
-      { "command": "fabric.agent.unregister", "title": "Fabric: Unregister Agents…" }
+      { "command": "fabric.agent.unregister", "title": "Fabric: Unregister Agents…" },
+      { "command": "fabric.cli.toggleDetected", "title": "Fabric PoC: Toggle CLI Detected" },
+      { "command": "fabric.cli.install",        "title": "Fabric: Install Fabric CLI…" }
     ],
     "menus": {
       "view/title": [
