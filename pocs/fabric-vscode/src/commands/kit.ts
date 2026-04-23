@@ -10,6 +10,7 @@ export function registerKitCommands(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand('fabric.kit.installFromStore', installFromStore),
     vscode.commands.registerCommand('fabric.kit.update', updateKit),
     vscode.commands.registerCommand('fabric.kit.simulateUpgrade', simulateUpgrade),
+    vscode.commands.registerCommand('fabric.kit.uninstall', uninstallKit),
   );
 }
 
@@ -145,4 +146,20 @@ function nextPatchVersion(v: string): string {
   const parts = main.split('.').map((n) => Number.parseInt(n, 10));
   parts[2] = (parts[2] ?? 0) + 1;
   return pre ? `${parts.join('.')}-${pre}` : parts.join('.');
+}
+
+async function uninstallKit(item?: { kit: InstalledKit }): Promise<void> {
+  const kit = item?.kit ?? (await pickInstalledKit('Select kit to uninstall'));
+  if (!kit) return;
+  const confirm = await vscode.window.showWarningMessage(
+    `Uninstall ${kit.name} (${kit.scope})?`,
+    { modal: true },
+    'Uninstall',
+  );
+  if (confirm !== 'Uninstall') return;
+  await runSafely('kit.uninstall', async () => {
+    fabric.kits.uninstall(kit.name, kit.scope);
+    logInfo(`Uninstalled ${kit.name} (${kit.scope})`);
+    await vscode.window.showInformationMessage(`Uninstalled ${kit.name}`);
+  });
 }
