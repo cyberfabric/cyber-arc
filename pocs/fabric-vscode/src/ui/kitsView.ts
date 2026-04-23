@@ -46,7 +46,7 @@ export class KitsTreeDataProvider implements vscode.TreeDataProvider<KitNode> {
     if (!node) {
       const all = fabric.kits.list({ scope: 'both' });
       if (all.length === 0) {
-        return [{ kind: 'empty', label: '(no kits installed)' }];
+        return []; // viewsWelcome takes over
       }
       const project = all.filter((k) => k.scope === 'project');
       const global = all.filter((k) => k.scope === 'global');

@@ -57,10 +57,7 @@ export class StoreTreeDataProvider implements vscode.TreeDataProvider<StoreNode>
     if (!node) {
       const mkts = fabric.marketplaces.list();
       if (mkts.length === 0) {
-        return [
-          { kind: 'empty', label: 'Run "Fabric: Add Marketplace…" to get started', contextValue: 'fabric.store.empty' },
-          { kind: 'empty', label: `Pre-releases: ${state.includePrereleases ? 'shown' : 'hidden'} (toggle via command)`, contextValue: 'fabric.store.prereleaseFlag' },
-        ];
+        return []; // viewsWelcome takes over
       }
       return mkts.map((m) => ({
         kind: 'marketplace' as const,

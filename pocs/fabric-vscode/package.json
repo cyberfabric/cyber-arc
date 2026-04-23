@@ -96,7 +96,21 @@
           "group": "inline"
         }
       ]
-    }
+    },
+    "viewsWelcome": [
+      {
+        "view": "fabric.kits",
+        "contents": "No fabric kits installed yet.\n\n[Install from URL](command:fabric.kit.installFromUrl)\n\nOr open the Store to browse."
+      },
+      {
+        "view": "fabric.store",
+        "contents": "No marketplaces registered.\n\n[Add Marketplace…](command:fabric.marketplace.add)\n\nBundled fixtures: `cyber-fabric-official`, `community-demo`."
+      },
+      {
+        "view": "fabric.agents",
+        "contents": "Detect and register agents here after installing kits.\n\n[Register Agents…](command:fabric.agent.register)"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
