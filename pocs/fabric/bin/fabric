@@ -1,0 +1,339 @@
+#!/usr/bin/env node
+
+const { ensureResourcesManifest, getLocalResourcesManifestPath } = require("../src/resources");
+const {
+  ensureGlobalPromptRegistry,
+  getPrompt,
+  getPromptHelp,
+  getPromptSource,
+  getPromptTypeHelp,
+  listActivePromptMetadata,
+  listPromptTypeCatalog,
+} = require("../src/prompts");
+const { ensureGlobalScriptRegistry, getScriptHelp, listActiveScriptMetadata, runScript } = require("../src/scripts");
+const { collectPromptText, delegatePrompt } = require("../src/delegates");
+const { registerKitFolder } = require("../src/kits");
+const { registerPrompts } = require("../src/register");
+const { runWebServer } = require("../src/web-server");
+
+function printUsage() {
+  process.stderr.write("Usage: fabric prompt get <name>\n");
+  process.stderr.write("   or: fabric prompt source <name>\n");
+  process.stderr.write("   or: fabric prompt list [--verbose]\n");
+  process.stderr.write("   or: fabric prompt types [--verbose]\n");
+  process.stderr.write("   or: fabric delegate <claude|codex> <prompt>\n");
+  process.stderr.write("   or: fabric prompt delegate <claude|codex> <name>\n");
+  process.stderr.write("   or: fabric script run <id> [parameters...]\n");
+  process.stderr.write("   or: fabric script help <id>\n");
+  process.stderr.write("   or: fabric script list [--verbose]\n");
+  process.stderr.write("   or: fabric register [path] [--local] [--include-global]\n");
+  process.stderr.write("   or: fabric init\n");
+  process.stderr.write("   or: fabric web run [--port <port>]\n");
+}
+
+function writeResult(value) {
+  if (value === undefined) {
+    return;
+  }
+
+  const output = typeof value === "string" ? value : JSON.stringify(value);
+  process.stdout.write(output.endsWith("\n") ? output : `${output}\n`);
+}
+
+function isVerboseFlag(value) {
+  return value === "--verbose";
+}
+
+function sortById(entries) {
+  return [...entries].sort((left, right) => left.id.localeCompare(right.id));
+}
+
+function formatPromptList(entries) {
+  const sorted = sortById(entries);
+  const lines = ["ID | Type | Name | Description"];
+
+  for (const entry of sorted) {
+    lines.push(`${entry.id} | ${entry.type} | ${entry.name} | ${entry.description || ""}`);
+  }
+
+  return lines.join("\n");
+}
+
+function formatScriptList(entries) {
+  const sorted = sortById(entries);
+  const lines = ["ID | Name | Description"];
+
+  for (const entry of sorted) {
+    lines.push(`${entry.id} | ${entry.name} | ${entry.description || ""}`);
+  }
+
+  return lines.join("\n");
+}
+
+function formatVerboseList(entries, formatter) {
+  const sections = sortById(entries)
+    .map((entry) => formatter(entry.id))
+    .filter(Boolean);
+
+  return sections.join("\n\n---\n\n");
+}
+
+function parseRegisterArguments(args) {
+  if (args.length > 3) {
+    return null;
+  }
+
+  let targetPath;
+  let local = false;
+  let includeGlobal = false;
+
+  for (const arg of args) {
+    if (arg === "--local") {
+      if (local) {
+        return null;
+      }
+
+      local = true;
+      continue;
+    }
+
+    if (arg === "--include-global") {
+      if (includeGlobal) {
+        return null;
+      }
+
+      includeGlobal = true;
+      continue;
+    }
+
+    if (targetPath !== undefined) {
+      return null;
+    }
+
+    targetPath = arg;
+  }
+
+  return {
+    targetPath,
+    local,
+    includeGlobal,
+  };
+}
+
+async function main(argv) {
+  const [group, action, ...rest] = argv;
+
+  if (group === "init" && action === undefined && rest.length === 0) {
+    try {
+      const manifestPath = getLocalResourcesManifestPath();
+      ensureResourcesManifest(manifestPath, { promptFiles: [], scriptFiles: [] });
+      process.stdout.write(`Initialized ${manifestPath}\n`);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  try {
+    ensureGlobalPromptRegistry();
+    ensureGlobalScriptRegistry();
+  } catch (error) {
+    process.stderr.write(`${error.message}\n`);
+    return 1;
+  }
+
+  if (group === "prompt" && action === "get" && rest.length === 1) {
+    const [name] = rest;
+    const prompt = getPrompt(name);
+
+    if (!prompt) {
+      process.stderr.write(`Unknown prompt: ${name}\n`);
+      return 1;
+    }
+
+    process.stdout.write(`${prompt}\n`);
+    return 0;
+  }
+
+  if (group === "prompt" && action === "source" && rest.length === 1) {
+    const [name] = rest;
+    const promptSource = getPromptSource(name);
+
+    if (!promptSource) {
+      process.stderr.write(`Unknown prompt: ${name}\n`);
+      return 1;
+    }
+
+    process.stdout.write(`${promptSource}\n`);
+    return 0;
+  }
+
+  if (group === "prompt" && action === "list" && (rest.length === 0 || (rest.length === 1 && isVerboseFlag(rest[0])))) {
+    const verbose = isVerboseFlag(rest[0]);
+    const prompts = listActivePromptMetadata();
+    const output = verbose
+      ? formatVerboseList(prompts, (id) => getPromptHelp(id))
+      : formatPromptList(prompts);
+
+    process.stdout.write(`${output}\n`);
+    return 0;
+  }
+
+  if (group === "prompt" && action === "types" && (rest.length === 0 || (rest.length === 1 && isVerboseFlag(rest[0])))) {
+    const verbose = isVerboseFlag(rest[0]);
+    const catalog = listPromptTypeCatalog();
+
+    if (verbose) {
+      const sections = catalog
+        .map((entry) => getPromptTypeHelp(entry.type))
+        .filter(Boolean);
+
+      process.stdout.write(`${sections.join("\n\n---\n\n")}\n`);
+      return 0;
+    }
+
+    const lines = ["Type | Summary | When to use"];
+
+    for (const entry of catalog) {
+      lines.push(`${entry.type} | ${entry.summary} | ${entry.whenToUse}`);
+    }
+
+    process.stdout.write(`${lines.join("\n")}\n`);
+    return 0;
+  }
+
+  if (group === "delegate" && rest.length >= 1) {
+    const [provider, ...promptParts] = [action, ...rest];
+    const prompt = collectPromptText(promptParts);
+
+    if (!prompt) {
+      process.stderr.write("Missing prompt text\n");
+      return 1;
+    }
+
+    try {
+      const result = delegatePrompt(provider, prompt);
+      process.stdout.write(`${result}\n`);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  if (group === "prompt" && action === "delegate" && rest.length === 2) {
+    const [provider, name] = rest;
+    const prompt = getPrompt(name);
+
+    if (!prompt) {
+      process.stderr.write(`Unknown prompt: ${name}\n`);
+      return 1;
+    }
+
+    try {
+      const result = delegatePrompt(provider, prompt);
+      process.stdout.write(`${result}\n`);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  if (group === "script" && action === "run" && rest.length >= 1) {
+    const [id, ...scriptArgs] = rest;
+
+    try {
+      const execution = await runScript(id, scriptArgs);
+
+      if (!execution) {
+        process.stderr.write(`Unknown script: ${id}\n`);
+        return 1;
+      }
+
+      writeResult(execution.result);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  if (group === "script" && action === "help" && rest.length === 1) {
+    const [id] = rest;
+
+    try {
+      const help = getScriptHelp(id);
+
+      if (!help) {
+        process.stderr.write(`Unknown script: ${id}\n`);
+        return 1;
+      }
+
+      process.stdout.write(`${help}\n`);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  if (group === "script" && action === "list" && (rest.length === 0 || (rest.length === 1 && isVerboseFlag(rest[0])))) {
+    try {
+      const verbose = isVerboseFlag(rest[0]);
+      const scripts = listActiveScriptMetadata();
+      const output = verbose
+        ? formatVerboseList(scripts, (id) => getScriptHelp(id))
+        : formatScriptList(scripts);
+
+      process.stdout.write(`${output}\n`);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  if (group === "register") {
+    const registerArguments = [action, ...rest].filter((value) => value !== undefined);
+    const parsed = parseRegisterArguments(registerArguments);
+
+    if (!parsed) {
+      printUsage();
+      return 1;
+    }
+
+    try {
+      if (parsed.targetPath) {
+        const result = registerKitFolder(parsed.targetPath, { local: parsed.local, includeGlobal: parsed.includeGlobal });
+        process.stdout.write(`Registered resources from ${result.absoluteKitPath} into ${result.registryManifestPath} and generated ${result.registration.prompts.length} skills in ${result.registration.targets.length} skill roots\n`);
+        return 0;
+      }
+
+      const result = registerPrompts({ local: parsed.local, includeGlobal: parsed.includeGlobal });
+      process.stdout.write(`Registered ${result.prompts.length} prompts into ${result.targets.length} skill roots\n`);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  if (group === "web" && action === "run") {
+    const exitCode = await runWebServer(rest);
+    return exitCode;
+  }
+
+  printUsage();
+  return 1;
+}
+
+main(process.argv.slice(2))
+  .then((exitCode) => {
+    process.exit(exitCode);
+  })
+  .catch((error) => {
+    process.stderr.write(`${error.message}\n`);
+    process.exit(1);
+  });
