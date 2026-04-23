@@ -2,12 +2,14 @@ import * as vscode from 'vscode';
 import fabric from '../fabricLib';
 import { runSafely } from '../errors';
 import { logInfo } from '../output';
-import type { Marketplace, Scope } from '../types';
+import type { InstalledKit, Marketplace, Scope } from '../types';
 
 export function registerKitCommands(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('fabric.kit.installFromUrl', installFromUrl),
     vscode.commands.registerCommand('fabric.kit.installFromStore', installFromStore),
+    vscode.commands.registerCommand('fabric.kit.update', updateKit),
+    vscode.commands.registerCommand('fabric.kit.simulateUpgrade', simulateUpgrade),
   );
 }
 
@@ -77,4 +79,70 @@ async function installFromStore(marketplace: Marketplace, kitName: string): Prom
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+async function updateKit(item?: { kit: InstalledKit }): Promise<void> {
+  const kit = item?.kit ?? (await pickInstalledKit('Select kit to update'));
+  if (!kit) return;
+
+  await runSafely('kit.update', async () => {
+    const latest = fabric.marketplaces.listKits().find((k) => k.name === kit.name);
+    if (!latest) throw new Error(`No marketplace currently offers ${kit.name}`);
+
+    const diff = {
+      added: latest.files.filter((f) => !kit.files.includes(f)),
+      removed: kit.files.filter((f) => !latest.files.includes(f)),
+      changed: latest.files.filter((f) => kit.files.includes(f)),
+    };
+    const lines = [
+      `Update ${kit.name}: ${kit.version} → ${latest.version}`,
+      '',
+      ...diff.added.map((f) => `+ ${f}`),
+      ...diff.removed.map((f) => `- ${f}`),
+      ...diff.changed.map((f) => `~ ${f}`),
+    ];
+    const choice = await vscode.window.showInformationMessage(
+      lines.join('\n'),
+      { modal: true },
+      'Apply Update',
+    );
+    if (choice !== 'Apply Update') return;
+
+    const result = fabric.kits.update(kit.name, kit.scope);
+    logInfo(`Updated ${result.name}: ${result.before} → ${result.after}`);
+    await vscode.window.showInformationMessage(`Updated ${result.name} to ${result.after}`);
+  });
+}
+
+async function simulateUpgrade(): Promise<void> {
+  const kit = await pickInstalledKit('Pick an installed kit to bump in the marketplace');
+  if (!kit) return;
+  const bumped = nextPatchVersion(kit.version);
+  (await import('../mock/state')).state.simulateMarketplaceUpgrade(kit.name, bumped);
+  logInfo(`Simulated marketplace upgrade: ${kit.name} → ${bumped}`);
+  await vscode.window.showInformationMessage(`Marketplace now offers ${kit.name} ${bumped}`);
+}
+
+async function pickInstalledKit(placeHolder: string): Promise<InstalledKit | undefined> {
+  const all = fabric.kits.list({ scope: 'both' });
+  if (all.length === 0) {
+    await vscode.window.showInformationMessage('No kits installed');
+    return undefined;
+  }
+  const picked = await vscode.window.showQuickPick(
+    all.map((k) => ({
+      label: k.name,
+      description: `${k.version} · ${k.scope}`,
+      kit: k,
+    })),
+    { placeHolder, ignoreFocusOut: true },
+  );
+  return picked?.kit;
+}
+
+function nextPatchVersion(v: string): string {
+  const [main, pre] = v.split('-', 2);
+  const parts = main.split('.').map((n) => Number.parseInt(n, 10));
+  parts[2] = (parts[2] ?? 0) + 1;
+  return pre ? `${parts.join('.')}-${pre}` : parts.join('.');
 }

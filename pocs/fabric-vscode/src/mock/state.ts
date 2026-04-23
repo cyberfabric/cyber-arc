@@ -45,6 +45,24 @@ class MockState {
     this.includePrereleases = false;
     (['kits', 'marketplaces', 'agents', 'cli', 'ui'] as StateChannel[]).forEach((c) => this.emit(c));
   }
+
+  simulateMarketplaceUpgrade(kitName: string, newVersion: string): void {
+    for (const m of this.marketplaces) {
+      for (const k of m.kits) {
+        if (k.name === kitName) {
+          k.version = newVersion;
+          k.files = [...k.files, `prompts/${kitName}-new-in-${newVersion}.md`];
+        }
+      }
+    }
+    for (const installed of this.installedKits) {
+      if (installed.name === kitName) {
+        installed.updateAvailable = { latest: newVersion };
+      }
+    }
+    this.emit('marketplaces');
+    this.emit('kits');
+  }
 }
 
 export const state = new MockState();

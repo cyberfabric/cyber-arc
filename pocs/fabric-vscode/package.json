@@ -32,7 +32,9 @@
       { "command": "fabric.marketplace.refresh", "title": "Fabric: Refresh Marketplaces" },
       { "command": "fabric.store.togglePrereleases", "title": "Fabric: Toggle Pre-releases in Store" },
       { "command": "fabric.kit.installFromUrl",   "title": "Fabric: Install Kit from URL" },
-      { "command": "fabric.kit.installFromStore", "title": "Fabric: Install Kit from Store" }
+      { "command": "fabric.kit.installFromStore", "title": "Fabric: Install Kit from Store" },
+      { "command": "fabric.kit.update",          "title": "Fabric: Update Kit…" },
+      { "command": "fabric.kit.simulateUpgrade", "title": "Fabric PoC: Simulate Marketplace Upgrade" }
     ],
     "menus": {
       "view/title": [
@@ -61,6 +63,11 @@
         {
           "command": "fabric.kit.installFromStore",
           "when": "view == fabric.store && viewItem == fabric.marketplace.kit",
+          "group": "inline"
+        },
+        {
+          "command": "fabric.kit.update",
+          "when": "view == fabric.kits && viewItem == fabric.kit.updatable",
           "group": "inline"
         }
       ]
