@@ -1,0 +1,44 @@
+{
+  "name": "fabric-vscode",
+  "displayName": "Fabric",
+  "description": "Manage fabric kits, marketplaces, and agent registration",
+  "version": "0.0.1",
+  "private": true,
+  "publisher": "cyberfabric",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fabric",
+          "title": "Fabric",
+          "icon": "media/fabric-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "fabric": [
+        { "id": "fabric.kits", "name": "My Kits" },
+        { "id": "fabric.store", "name": "Store" },
+        { "id": "fabric.agents", "name": "Agents" }
+      ]
+    },
+    "commands": [],
+    "menus": {}
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "compile-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}
