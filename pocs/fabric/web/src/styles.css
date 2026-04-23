@@ -64,3 +64,40 @@ button { font: inherit; color: inherit; }
 .view__title { margin: 0 0 10px; font-size: 18px; font-weight: 600; }
 .view__lead { color: var(--fg); }
 .view__hint { color: var(--fg-muted); font-style: italic; }
+
+.view__header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.view__header-row .view__title { margin: 0; }
+
+.toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--fg-muted); font-size: 12px; cursor: pointer; }
+.toggle input { margin: 0; }
+
+.group { margin-bottom: 20px; }
+.group__title {
+  font-weight: 600; margin-bottom: 6px; display: flex; align-items: baseline; gap: 8px;
+}
+.group__count { color: var(--fg-muted); font-weight: 400; font-size: 12px; }
+.group__sub { color: var(--fg-muted); font-weight: 400; font-size: 12px; font-style: italic; }
+.group__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.row {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg-elev);
+}
+.row--danger { border-color: var(--danger); }
+.row--muted { opacity: 0.6; }
+.row__main { flex: 1; min-width: 0; }
+.row__title { font-weight: 500; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.row__version { color: var(--fg-muted); font-weight: 400; font-size: 12px; }
+.row__desc { color: var(--fg-muted); font-size: 12px; margin-top: 2px; }
+.row__badges { display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+
+.badge {
+  display: inline-block; padding: 2px 8px; border-radius: 10px;
+  background: var(--bg-elev-2); color: var(--fg-muted); font-size: 11px; white-space: nowrap;
+}
+.badge--accent { background: color-mix(in srgb, var(--accent) 30%, var(--bg-elev-2)); color: var(--fg); }
+.badge--warn { background: color-mix(in srgb, var(--warn) 30%, var(--bg-elev-2)); color: var(--fg); }
+.badge--danger { background: color-mix(in srgb, var(--danger) 30%, var(--bg-elev-2)); color: var(--fg); }
+.badge--success { background: color-mix(in srgb, var(--success) 30%, var(--bg-elev-2)); color: var(--fg); }
+.badge--muted { opacity: 0.6; }
