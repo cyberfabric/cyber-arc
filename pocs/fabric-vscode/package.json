@@ -29,7 +29,8 @@
     "commands": [
       { "command": "fabric.marketplace.add",     "title": "Fabric: Add Marketplace…" },
       { "command": "fabric.marketplace.remove",  "title": "Fabric: Remove Marketplace" },
-      { "command": "fabric.marketplace.refresh", "title": "Fabric: Refresh Marketplaces" }
+      { "command": "fabric.marketplace.refresh", "title": "Fabric: Refresh Marketplaces" },
+      { "command": "fabric.store.togglePrereleases", "title": "Fabric: Toggle Pre-releases in Store" }
     ],
     "menus": {
       "view/title": [
@@ -40,6 +41,11 @@
         },
         {
           "command": "fabric.marketplace.add",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        },
+        {
+          "command": "fabric.store.togglePrereleases",
           "when": "view == fabric.store",
           "group": "navigation"
         }
