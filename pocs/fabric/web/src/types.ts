@@ -95,4 +95,79 @@ export interface WebExtension {
     title: string;
     lines: string[];
   };
+  /** v1 demo-level contributions to the Workspaces viewer. */
+  workspaceContributions?: WorkspaceContributions;
+}
+
+export type Language =
+  | 'typescript'
+  | 'markdown'
+  | 'python'
+  | 'toml'
+  | 'bash'
+  | 'json';
+
+export interface WorkspaceFile {
+  /** Path relative to workspace root, POSIX-style, no leading slash. */
+  path: string;
+  language: Language;
+  content: string;
+  /**
+   * Optional one-sentence summary used by the canned chat responder when this file
+   * is the active context. When absent, the responder falls back to counting
+   * top-level symbols.
+   */
+  summary?: string;
+}
+
+export interface Workspace {
+  id: string;
+  name: string;
+  description: string;
+  files: WorkspaceFile[];
+}
+
+export interface WorkspaceRendererContribution {
+  /**
+   * Match string. Supported syntax:
+   *   - `*.ext`          matches any file whose path ends with `.ext`
+   *   - `literal.name`   matches the basename exactly
+   *   - `dir/*.ext`      matches inside a specific directory
+   */
+  match: string;
+  /** Key in the renderers registry. */
+  componentKey: string;
+  /** Human label shown in UI affordances. */
+  label: string;
+}
+
+export interface WorkspaceActionContribution {
+  id: string;
+  label: string;
+  /** Emoji or sidebar icon-name hint. */
+  icon?: string;
+  /**
+   * Prompt template inserted as a synthetic user message when clicked.
+   * `{file}` is substituted with the active file path.
+   */
+  onClickPrompt: string;
+}
+
+export interface WorkspaceContributions {
+  renderers?: WorkspaceRendererContribution[];
+  actions?: WorkspaceActionContribution[];
+  /** Registry key of a highlight pack to activate while the contributing kit is installed. */
+  highlightPack?: string;
+}
+
+export type ChatAgent = 'claude' | 'codex';
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'agent';
+  agent?: ChatAgent;
+  text: string;
+  timestamp: number;
+  /** Active file path at send time. */
+  fileContext?: string;
 }
