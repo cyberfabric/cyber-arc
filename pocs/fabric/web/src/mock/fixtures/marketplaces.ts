@@ -63,6 +63,20 @@ export const FIXTURE_MARKETPLACES: Marketplace[] = [
                 'Checkpoints let you review intermediate artifacts before proceeding.',
               ],
             },
+            workspaceContributions: {
+              renderers: [
+                { match: '*.spec.md', componentKey: 'spec-view', label: 'Spec View' },
+                { match: '*.prd.md',  componentKey: 'spec-view', label: 'Spec View' },
+              ],
+              actions: [
+                {
+                  id: 'sdlc.pr-review',
+                  label: 'PR Review',
+                  icon: 'git-pull-request',
+                  onClickPrompt: 'Please review `{file}` for style, clarity, and correctness. Flag blocking issues first.',
+                },
+              ],
+            },
           },
           {
             id: 'sdlc-kit.chat',
@@ -122,6 +136,41 @@ export const FIXTURE_MARKETPLACES: Marketplace[] = [
           'prompts/prompt-brainstorm.md',
           'prompts/prompt-generate.md',
           'prompts/prompt-repair.md',
+        ],
+      },
+      {
+        name: 'syntax-pack-pro',
+        description: 'Richer syntax highlighting + a Kit Manifest renderer',
+        category: 'visual',
+        author: { name: 'Cyber Fabric' },
+        homepage: 'https://github.com/cyberfabric/syntax-pack-pro',
+        source: { source: 'url', url: 'https://github.com/cyberfabric/syntax-pack-pro.git', version: '0.1.0' },
+        version: '0.1.0',
+        files: [
+          'packs/pro.json',
+          'renderers/kit-toml-card.ts',
+        ],
+        webExtensions: [
+          {
+            id: 'syntax-pack-pro.viewer',
+            label: 'Syntax Pack Pro',
+            icon: 'workflow',
+            description: 'Activates a richer highlight pack and kit-manifest renderer in Workspaces.',
+            placeholder: {
+              title: 'Syntax Pack Pro',
+              lines: [
+                'Installing this kit swaps the default highlight pack for a richer one.',
+                'It also registers a renderer that displays kit.toml as a structured card.',
+                'Uninstall to roll back.',
+              ],
+            },
+            workspaceContributions: {
+              highlightPack: 'pro',
+              renderers: [
+                { match: 'kit.toml', componentKey: 'kit-toml-card', label: 'Kit Manifest' },
+              ],
+            },
+          },
         ],
       },
     ],
