@@ -1,0 +1,6 @@
+schema_version = 1
+
+name = "with-bearer"
+description = "Fixture API with bearer auth"
+base_url = "http://MOCK_SERVER_URL_PLACEHOLDER"
+auth_ref = "bearer-token"
