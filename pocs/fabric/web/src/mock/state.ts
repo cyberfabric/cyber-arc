@@ -2,9 +2,14 @@ import type {
   AgentInfo,
   InstalledKit,
   Marketplace,
+  Workspace,
+  ChatMessage,
+  ChatAgent,
 } from '../types';
 
-export type StateChannel = 'kits' | 'marketplaces' | 'agents' | 'cli' | 'ui';
+export type StateChannel =
+  | 'kits' | 'marketplaces' | 'agents' | 'cli' | 'ui'
+  | 'workspaces' | 'workspaces-ui';
 
 type Listener = () => void;
 
@@ -32,6 +37,18 @@ class MockState {
   cliPath: string | undefined = '/usr/local/bin/fabric';
   includePrereleases = false;
 
+  // Workspaces (read-only fixtures wired up in Task 3).
+  workspaces: Workspace[] = [];
+  // Workspaces UI state (in-memory only; resets on reload).
+  activeWorkspaceId: string | null = null;
+  openTabs: string[] = [];        // file paths in active workspace
+  activeTabPath: string | null = null;
+  expandedFolders: Set<string> = new Set();
+  treeSearch = '';
+  chatMessages: ChatMessage[] = [];
+  chatAgent: ChatAgent = 'claude';
+  chatInput = '';
+
   private emitter = new ChannelEmitter();
 
   on(channel: StateChannel, listener: Listener): void {
@@ -54,7 +71,16 @@ class MockState {
     this.cliVersion = '0.2.0';
     this.cliPath = '/usr/local/bin/fabric';
     this.includePrereleases = false;
-    (['kits', 'marketplaces', 'agents', 'cli', 'ui'] as StateChannel[]).forEach((c) => this.emit(c));
+    this.activeWorkspaceId = null;
+    this.openTabs = [];
+    this.activeTabPath = null;
+    this.expandedFolders = new Set();
+    this.treeSearch = '';
+    this.chatMessages = [];
+    this.chatAgent = 'claude';
+    this.chatInput = '';
+    (['kits', 'marketplaces', 'agents', 'cli', 'ui', 'workspaces', 'workspaces-ui'] as StateChannel[])
+      .forEach((c) => this.emit(c));
   }
 
   simulateMarketplaceUpgrade(kitName: string, newVersion: string): void {
