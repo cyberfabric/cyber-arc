@@ -7,6 +7,8 @@ import type {
   ChatAgent,
 } from '../types';
 
+import { FIXTURE_WORKSPACES } from './fixtures/workspaces';
+
 export type StateChannel =
   | 'kits' | 'marketplaces' | 'agents' | 'cli' | 'ui'
   | 'workspaces' | 'workspaces-ui';
@@ -38,7 +40,7 @@ class MockState {
   includePrereleases = false;
 
   // Workspaces (read-only fixtures wired up in Task 3).
-  workspaces: Workspace[] = [];
+  workspaces: Workspace[] = [...FIXTURE_WORKSPACES];
   // Workspaces UI state (in-memory only; resets on reload).
   activeWorkspaceId: string | null = null;
   openTabs: string[] = [];        // file paths in active workspace
@@ -71,6 +73,7 @@ class MockState {
     this.cliVersion = '0.2.0';
     this.cliPath = '/usr/local/bin/fabric';
     this.includePrereleases = false;
+    this.workspaces = [...FIXTURE_WORKSPACES];
     this.activeWorkspaceId = null;
     this.openTabs = [];
     this.activeTabPath = null;
