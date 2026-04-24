@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import fabric from './fabricLib';
 import { useMockState } from './hooks/useMockState';
 import Sidebar, { type SidebarEntry } from './ui/Sidebar';
-import OverviewView from './ui/views/OverviewView';
+import WorkspacesView from './ui/views/WorkspacesView';
 import KitsView from './ui/views/KitsView';
 import StoreView from './ui/views/StoreView';
 import AgentsView from './ui/views/AgentsView';
@@ -12,10 +12,10 @@ import CliStatus from './ui/cli/CliStatus';
 import type { InstalledKit, WebExtension } from './types';
 
 const CORE_ENTRIES: SidebarEntry[] = [
-  { id: 'overview', label: 'Overview', icon: '🏠', group: 'core' },
-  { id: 'kits',     label: 'My Kits',   icon: '📦', group: 'core' },
-  { id: 'store',    label: 'Store',     icon: '🛒', group: 'core' },
-  { id: 'agents',   label: 'Agents',    icon: '🤖', group: 'core' },
+  { id: 'workspaces', label: 'Workspaces', icon: '📁', group: 'core' },
+  { id: 'kits',       label: 'My Kits',    icon: '📦', group: 'core' },
+  { id: 'store',      label: 'Store',      icon: '🛒', group: 'core' },
+  { id: 'agents',     label: 'Agents',     icon: '🤖', group: 'core' },
 ];
 
 interface ExtensionEntry {
@@ -78,7 +78,7 @@ export default function App(): JSX.Element {
     }
   }, []);
 
-  const [activeId, setActiveId] = useState<string>('overview');
+  const [activeId, setActiveId] = useState<string>('workspaces');
 
   const extensionEntries = useMemo(() => collectExtensionEntries(), [fabric.kits.list({ scope: 'both' }).length, fabric.marketplaces.list().length]);
   const entries = useMemo<SidebarEntry[]>(
@@ -86,10 +86,10 @@ export default function App(): JSX.Element {
     [extensionEntries],
   );
 
-  // If active id refers to an extension that's no longer installed, fall back to overview.
+  // If active id refers to an extension that's no longer installed, fall back to workspaces.
   useEffect(() => {
     const allIds = new Set(entries.map((e) => e.id));
-    if (!allIds.has(activeId)) setActiveId('overview');
+    if (!allIds.has(activeId)) setActiveId('workspaces');
   }, [entries, activeId]);
 
   const activeExtension = extensionEntries.find((e) => e.sidebar.id === activeId);
@@ -125,9 +125,10 @@ export default function App(): JSX.Element {
 
 function renderCore(id: string): JSX.Element {
   switch (id) {
-    case 'kits':   return <KitsView />;
-    case 'store':  return <StoreView />;
-    case 'agents': return <AgentsView />;
-    default:       return <OverviewView />;
+    case 'kits':       return <KitsView />;
+    case 'store':      return <StoreView />;
+    case 'agents':     return <AgentsView />;
+    case 'workspaces': return <WorkspacesView />;
+    default:           return <WorkspacesView />;
   }
 }
