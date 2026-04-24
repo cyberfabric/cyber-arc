@@ -131,11 +131,13 @@ function ensureResourcesManifest(targetManifestPath, resources = {}) {
   const merged = {
     promptFiles: uniqueEntries([...existing.promptFiles, ...(resources.promptFiles || [])]),
     scriptFiles: uniqueEntries([...existing.scriptFiles, ...(resources.scriptFiles || [])]),
+    apiFiles: uniqueEntries([...(existing.apiFiles || []), ...(resources.apiFiles || [])]),
   };
 
   if (
     merged.promptFiles.length !== existing.promptFiles.length
     || merged.scriptFiles.length !== existing.scriptFiles.length
+    || merged.apiFiles.length !== (existing.apiFiles || []).length
   ) {
     fs.writeFileSync(targetManifestPath, buildResourcesManifestContent(merged), "utf8");
   }
