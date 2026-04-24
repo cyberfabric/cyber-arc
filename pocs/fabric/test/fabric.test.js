@@ -45,7 +45,7 @@ test("fabric init creates a local empty resources manifest without bootstrapping
     assert.equal(fs.existsSync(localManifest), true);
     assert.equal(result.stdout, `Initialized ${fs.realpathSync(localManifest)}\n`);
     assert.equal(result.stderr, "");
-    assert.equal(fs.readFileSync(localManifest, "utf8"), "schema_version = 1\nprompt_files = [ ]\nscript_files = [ ]\n");
+    assert.equal(fs.readFileSync(localManifest, "utf8"), "schema_version = 1\nprompt_files = [ ]\nscript_files = [ ]\napi_files = [ ]\n");
     assert.equal(fs.existsSync(globalManifest), false);
   } finally {
     fs.rmSync(tempHome, { recursive: true, force: true });
