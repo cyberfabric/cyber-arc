@@ -202,13 +202,138 @@ function getApiHelp(name, options = {}) {
   return lines.join("\n");
 }
 
+const DEFAULT_TIMEOUT_MS = 30_000;
+
+async function callApi(serviceName, callOptions = {}, options = {}) {
+  const def = getApiDefinition(serviceName, options);
+  if (!def) {
+    throw new Error(`Unknown API: ${serviceName}`);
+  }
+
+  const reqPath = typeof callOptions.path === "string" ? callOptions.path : "/";
+  const method = (callOptions.method || "GET").toUpperCase();
+  const url = def.baseUrl + (reqPath.startsWith("/") ? reqPath : `/${reqPath}`);
+
+  // Merge headers: default_headers < auth < per-call (lowercased-key merge to
+  // avoid "Authorization" vs "authorization" duplication).
+  const mergedHeaders = lowercaseMerge(def.defaultHeaders);
+
+  const applier = def.authRef ? resolveAuth(def.authRef, options) : { applyHeaders: () => {} };
+  if (def.authRef && !applier) {
+    throw new Error(`Credential not found: ${def.authRef}`);
+  }
+  const authHeaders = {};
+  applier.applyHeaders(authHeaders);
+  Object.assign(mergedHeaders, lowercaseMerge(authHeaders));
+
+  if (callOptions.headers && typeof callOptions.headers === "object") {
+    Object.assign(mergedHeaders, lowercaseMerge(callOptions.headers));
+  }
+
+  // Body serialization.
+  let body;
+  if (callOptions.body === undefined || callOptions.body === null) {
+    body = undefined;
+  } else if (Buffer.isBuffer(callOptions.body)) {
+    body = callOptions.body;
+  } else if (typeof callOptions.body === "string") {
+    body = callOptions.body;
+  } else if (typeof callOptions.body === "object") {
+    body = JSON.stringify(callOptions.body);
+    if (!mergedHeaders["content-type"]) {
+      mergedHeaders["content-type"] = "application/json";
+    }
+  } else {
+    throw new Error("Invalid body type: expected string, Buffer, object, or undefined");
+  }
+
+  // Restore original-case header names for fetch. Lowercased internally only
+  // for merge; pick back the original case from the last seen key.
+  const finalHeaders = restoreOriginalCase(mergedHeaders, [
+    def.defaultHeaders,
+    authHeaders,
+    callOptions.headers || {},
+  ]);
+
+  const timeoutMs = callOptions.timeoutMs || DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: finalHeaders,
+      body,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err && err.name === "AbortError") {
+      throw new Error(`Request timed out after ${timeoutMs}ms`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+
+  const responseHeaders = {};
+  response.headers.forEach((value, key) => {
+    responseHeaders[key] = value;
+  });
+
+  const text = await response.text();
+  const contentType = responseHeaders["content-type"] || "";
+  let parsedBody = text;
+  if (contentType.includes("application/json") && text.length > 0) {
+    try {
+      parsedBody = JSON.parse(text);
+    } catch {
+      parsedBody = text;
+    }
+  }
+
+  return {
+    status: response.status,
+    headers: responseHeaders,
+    body: parsedBody,
+    ok: response.ok,
+  };
+}
+
+function lowercaseMerge(source) {
+  const out = {};
+  if (!source) return out;
+  for (const [key, value] of Object.entries(source)) {
+    out[key.toLowerCase()] = value;
+  }
+  return out;
+}
+
+function restoreOriginalCase(lowercased, sources) {
+  // Later sources win for case preservation.
+  const casing = {};
+  for (const source of sources) {
+    if (!source) continue;
+    for (const key of Object.keys(source)) {
+      casing[key.toLowerCase()] = key;
+    }
+  }
+  const out = {};
+  for (const [lowerKey, value] of Object.entries(lowercased)) {
+    const originalKey = casing[lowerKey] || lowerKey;
+    out[originalKey] = value;
+  }
+  return out;
+}
+
 module.exports = {
-  ensureGlobalApiRegistry,
-  ensureApisManifest,
-  resolveActiveApiFilePaths,
   buildApiRegistry,
+  callApi,
+  ensureApisManifest,
+  ensureGlobalApiRegistry,
   getApiDefinition,
   getApiHelp,
   listActiveApiMetadata,
   parseApiFile,
+  resolveActiveApiFilePaths,
 };
