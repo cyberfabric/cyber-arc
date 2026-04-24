@@ -5,6 +5,7 @@ const {
   ensureGlobalPromptRegistry,
   getPrompt,
   getPromptHelp,
+  getPromptInfo,
   getPromptSource,
   getPromptTypeHelp,
   listActivePromptMetadata,
@@ -19,6 +20,7 @@ const { runWebServer } = require("../src/web-server");
 function printUsage() {
   process.stderr.write("Usage: fabric prompt get <name>\n");
   process.stderr.write("   or: fabric prompt source <name>\n");
+  process.stderr.write("   or: fabric prompt help <name>\n");
   process.stderr.write("   or: fabric prompt list [--verbose]\n");
   process.stderr.write("   or: fabric prompt types [--verbose]\n");
   process.stderr.write("   or: fabric delegate <claude|codex> <prompt>\n");
@@ -169,11 +171,24 @@ async function main(argv) {
     return 0;
   }
 
+  if (group === "prompt" && action === "help" && rest.length === 1) {
+    const [name] = rest;
+    const help = getPromptHelp(name);
+
+    if (help === undefined) {
+      process.stderr.write(`Unknown prompt: ${name}\n`);
+      return 1;
+    }
+
+    process.stdout.write(`${help}\n`);
+    return 0;
+  }
+
   if (group === "prompt" && action === "list" && (rest.length === 0 || (rest.length === 1 && isVerboseFlag(rest[0])))) {
     const verbose = isVerboseFlag(rest[0]);
     const prompts = listActivePromptMetadata();
     const output = verbose
-      ? formatVerboseList(prompts, (id) => getPromptHelp(id))
+      ? formatVerboseList(prompts, (id) => getPromptInfo(id))
       : formatPromptList(prompts);
 
     process.stdout.write(`${output}\n`);
