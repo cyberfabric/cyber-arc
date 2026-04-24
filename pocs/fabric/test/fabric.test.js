@@ -17,6 +17,10 @@ const promptingScriptGlob = path.join(promptingKitPath, "scripts", "*.js");
 const middlewareManifestPath = path.join(__dirname, "fixtures", "middleware", "resources.toml");
 const middlewareFixturePath = path.join(__dirname, "fixtures", "middleware");
 const middlewarePromptGlob = path.join(middlewareFixturePath, "prompts", "*.md");
+const apiFixturePath = path.join(__dirname, "fixtures", "api");
+const apiFixtureApisDir = path.join(apiFixturePath, "apis");
+const apiFixtureAuthPath = path.join(apiFixturePath, "auth.toml");
+const { createMockServer } = require("./fixtures/api/mock-server");
 const sharedCliHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-cli-home-"));
 const questionsAtEndMiddleware = "If you need to ask the user questions, place all user-facing questions together as a list at the very end of the output. Label the questions as `A`, `B`, `C`, `D`, and so on. Number the answer options for each question so the user can reply compactly with forms such as `A1`, `B3`, or `A2, C1`. Always propose your own recommended option or answer and explain why. Each question must include its rationale, and include relevant risks or trade-offs when applicable.";
 
@@ -26,6 +30,40 @@ function buildCliEnv(homeDir = sharedCliHome, overrides = {}) {
     FABRIC_HOME: homeDir,
     ...overrides,
   };
+}
+
+function setupApiFixtures(tempHome, mockUrl, { includeDuplicate = false } = {}) {
+  const globalRegistryDir = path.join(tempHome, ".fabric");
+  fs.mkdirSync(globalRegistryDir, { recursive: true });
+
+  // Copy auth.toml
+  const authSource = fs.readFileSync(apiFixtureAuthPath, "utf8");
+  fs.writeFileSync(path.join(globalRegistryDir, "auth.toml"), authSource, "utf8");
+
+  // Copy API fixtures, substituting the mock URL.
+  const targetApisDir = path.join(tempHome, "apis");
+  fs.mkdirSync(targetApisDir, { recursive: true });
+  const sources = fs.readdirSync(apiFixtureApisDir);
+  const copied = [];
+  for (const entry of sources) {
+    if (entry === "duplicate.api.toml" && !includeDuplicate) continue;
+    const sourcePath = path.join(apiFixtureApisDir, entry);
+    const targetPath = path.join(targetApisDir, entry);
+    const raw = fs.readFileSync(sourcePath, "utf8");
+    const substituted = raw.replace("http://MOCK_SERVER_URL_PLACEHOLDER", mockUrl);
+    fs.writeFileSync(targetPath, substituted, "utf8");
+    copied.push(targetPath);
+  }
+
+  const apiGlob = path.join(targetApisDir, "*.api.toml");
+  const manifestPath = path.join(globalRegistryDir, "resources.toml");
+  fs.writeFileSync(
+    manifestPath,
+    `schema_version = 1\n\nprompt_files = []\n\nscript_files = []\n\napi_files = [\n  "${apiGlob}",\n]\n`,
+    "utf8",
+  );
+
+  return { apiGlob, manifestPath, copied };
 }
 
 test("fabric init creates a local empty resources manifest without bootstrapping the global registry", () => {
@@ -1073,5 +1111,349 @@ test("fabric register --local <path> --include-global writes local registries an
   } finally {
     fs.rmSync(tempHome, { recursive: true, force: true });
     fs.rmSync(tempWorkspace, { recursive: true, force: true });
+  }
+});
+
+test("fabric api list with no APIs returns an empty table", () => {
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-list-empty-"));
+  const globalRegistryDir = path.join(tempHome, ".fabric");
+  const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
+
+  try {
+    fs.mkdirSync(globalRegistryDir, { recursive: true });
+    fs.writeFileSync(globalRegistryPath, "schema_version = 1\n\nprompt_files = []\n\nscript_files = []\n\napi_files = []\n", "utf8");
+
+    const result = spawnSync(process.execPath, [cliPath, "api", "list"], {
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout, "Name | Description | Base URL | Auth\n");
+    assert.equal(result.stderr, "");
+  } finally {
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api list returns a row per registered API", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-list-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+
+    const result = spawnSync(process.execPath, [cliPath, "api", "list"], {
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, "");
+    const lines = result.stdout.trim().split("\n");
+    assert.equal(lines[0], "Name | Description | Base URL | Auth");
+    const names = lines.slice(1).map((l) => l.split(" | ")[0]);
+    assert.deepEqual(names.sort(), ["sample", "with-basic", "with-bearer", "with-header", "with-help"]);
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api help prints the authored help section when present", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-help-authored-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+
+    const result = spawnSync(process.execPath, [cliPath, "api", "help", "with-help"], {
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, "");
+    assert.ok(result.stdout.includes("## Usage"));
+    assert.ok(result.stdout.includes("fabric api call with-help /ping"));
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api help falls back to metadata when no marker is present", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-help-fallback-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+
+    const result = spawnSync(process.execPath, [cliPath, "api", "help", "sample"], {
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stderr, "");
+    assert.ok(result.stdout.includes("Name: sample"));
+    assert.ok(result.stdout.includes("Description: Fixture API without auth"));
+    assert.ok(result.stdout.includes(`Base URL: ${mock.url}`));
+    assert.ok(result.stdout.includes("Auth: (none)"));
+    assert.ok(result.stdout.includes("(no <!-- help --> section in api file)"));
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api help returns an error for an unknown API", () => {
+  const result = spawnSync(process.execPath, [cliPath, "api", "help", "definitely-missing"], {
+    encoding: "utf8",
+    env: buildCliEnv(),
+  });
+
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, "Unknown API: definitely-missing\n");
+});
+
+test("fabric api call GET reaches the mock server and returns the body", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-get-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("sample", { path: "/ping" }, { homeDir: tempHome });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.status, 200);
+    assert.equal(r.body.method, "GET");
+    assert.equal(r.body.url, "/ping");
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api call POST --json sets Content-Type and body", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-post-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("sample", {
+      method: "POST",
+      path: "/echo",
+      body: '{"hello":"world"}',
+      headers: { "Content-Type": "application/json" },
+    }, { homeDir: tempHome });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.body.method, "POST");
+    assert.equal(r.body.headers["content-type"], "application/json");
+    assert.equal(r.body.body, '{"hello":"world"}');
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api call -H forwards the header verbatim", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-header-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("sample", {
+      path: "/echo",
+      headers: { "X-Trace": "trace-1" },
+    }, { homeDir: tempHome });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.body.headers["x-trace"], "trace-1");
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api call exits 1 on non-2xx and writes status to stderr", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-error-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("sample", { path: "/status/404" }, { homeDir: tempHome });
+
+    assert.equal(r.ok, false);
+    assert.equal(r.status, 404);
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api call injects Bearer Authorization from auth.toml", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-bearer-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("with-bearer", { path: "/ping" }, { homeDir: tempHome });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.body.headers.authorization, "Bearer test-bearer-abc123");
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api call injects Basic Authorization from auth.toml", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-basic-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("with-basic", { path: "/ping" }, { homeDir: tempHome });
+
+    assert.equal(r.ok, true);
+    const expected = "Basic " + Buffer.from("alice:secret").toString("base64");
+    assert.equal(r.body.headers.authorization, expected);
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api call with header-type credential sets each declared header", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-header-auth-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("with-header", { path: "/ping" }, { homeDir: tempHome });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.body.headers["x-api-key"], "api-key-xyz");
+    assert.equal(r.body.headers["x-default"], "yes");
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api call fails when auth_ref points to a missing credential", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-missing-cred-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    fs.writeFileSync(path.join(tempHome, ".fabric", "auth.toml"), "schema_version = 1\n", "utf8");
+
+    const result = spawnSync(process.execPath, [
+      cliPath, "api", "call", "with-bearer", "/ping",
+    ], {
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.ok(result.stderr.includes("Credential not found: bearer-token"));
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric api list throws on duplicate API names", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-dup-"));
+  try {
+    setupApiFixtures(tempHome, mock.url, { includeDuplicate: true });
+
+    const result = spawnSync(process.execPath, [
+      cliPath, "api", "list",
+    ], {
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+
+    assert.equal(result.status, 1);
+    assert.ok(result.stderr.includes("Duplicate API definition \"sample\""));
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("per-call -H overrides an auth-contributed header with the same name", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-override-"));
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    const { callApi } = require("../src/apis");
+
+    const r = await callApi("with-bearer", {
+      path: "/ping",
+      headers: { "Authorization": "Override-Value" },
+    }, { homeDir: tempHome });
+
+    assert.equal(r.ok, true);
+    assert.equal(r.body.headers.authorization, "Override-Value");
+  } finally {
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric SDK api.call returns { status, headers, body, ok }", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-sdk-"));
+  const prevHome = process.env.FABRIC_HOME;
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    process.env.FABRIC_HOME = tempHome;
+    const fabric = require("../src/public.js");
+
+    const r = await fabric.api.call("sample", { path: "/hello" });
+
+    assert.equal(r.status, 200);
+    assert.equal(r.ok, true);
+    assert.equal(r.body.method, "GET");
+  } finally {
+    process.env.FABRIC_HOME = prevHome;
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric SDK api.call returns ok:false on non-2xx without throwing", async () => {
+  const mock = await createMockServer();
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-sdk-404-"));
+  const prevHome = process.env.FABRIC_HOME;
+  try {
+    setupApiFixtures(tempHome, mock.url);
+    process.env.FABRIC_HOME = tempHome;
+    const fabric = require("../src/public.js");
+
+    let r;
+    try {
+      r = await fabric.api.call("sample", { path: "/status/404" });
+    } catch (err) {
+      assert.fail("fabric.api.call should not throw on non-2xx, but threw: " + err.message);
+    }
+
+    assert.equal(r.status, 404);
+    assert.equal(r.ok, false);
+  } finally {
+    process.env.FABRIC_HOME = prevHome;
+    await mock.close();
+    fs.rmSync(tempHome, { recursive: true, force: true });
   }
 });
