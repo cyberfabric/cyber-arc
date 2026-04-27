@@ -1,0 +1,9 @@
+{
+  "name": "cyberfabric-pocs",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cyberfabric PoC root — npm workspaces for fabric core and consumer kits",
+  "workspaces": [
+    "fabric"
+  ]
+}

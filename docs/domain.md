@@ -1,6 +1,6 @@
 # Cyber Fabric — Domain Model
 
-![Cyber Fabric Domain Model](domain.drawio.png)
+![Cyber Fabric Domain Model — High-Level](domain-high-level.drawio.png)
 
 ## Overview
 
@@ -32,7 +32,7 @@ Entities are grouped by layer. Relation direction is expressed as `entity → ta
 |---|---|---|---|
 | **Fabric CLI** | Primary command-line entry point. Exposes commands and parameters for every Fabric operation: kit install, prompt register, resource listing, launching the web UI, etc. | `uses` `Fabric Toolkit`; `runs` `Fabric WEB App`; packaged inside `Fabric Docker Image`. | `pocs/fabric/bin/` and `pocs/fabric/src/*.js` (commands: `kits`, `prompts`, `resources`, `delegates`, `register`, `web-server`). |
 | **Fabric Toolkit** | The shared library of types, methods, and interfaces behind every Fabric surface. A single source of truth for kit/resource/workspace operations so CLI, web, and VS Code plugin behave identically. | Reads/writes `Fabric Config`; `read/write/manages` `Fabric Workspace`; `install/remove/register` `Fabric Kit`; `uses` `Fabric Resources`. Consumed by `Fabric CLI`, `Fabric WEB App`, `Fabric VS Code Plugin`. | `pocs/fabric/src/public.js` exposes the public surface; types mirrored in `pocs/fabric/web/src/types.ts`. |
-| **Fabric Config** | Declarative configuration for Fabric behavior, scoped to **global** (`~/.fabric/`) or **workspace** (`.fabric/` in the project root). Controls which kits, resources, agents, and preferences apply in a given context. | `Fabric Toolkit` reads and writes it; it `operates` on `Fabric Resources`. | `~/.fabric/resources.toml` and `.fabric/resources.toml` (global vs. local), handled by `pocs/fabric/src/resources.js`. |
+| **Fabric Config** | Declarative configuration for Fabric behavior, scoped to **global** (`~/.fabric/`) or **workspace** (`.fabric/` in the project root). Controls which kits, resources, agents, and preferences apply in a given context. Also holds API credentials (global-only, `~/.fabric/auth.toml`) consumed by `Fabric API`. | `Fabric Toolkit` reads and writes it; it `operates` on `Fabric Resources`; supplies credentials to `Fabric API`. | `~/.fabric/resources.toml` and `.fabric/resources.toml` (global vs. local), handled by `pocs/fabric/src/resources.js`. `auth.toml` not yet implemented. |
 
 ### 4. Domain objects (content model)
 
@@ -41,9 +41,10 @@ Entities are grouped by layer. Relation direction is expressed as `entity → ta
 | **Fabric Workspace** | A multi-repo delivery context. Groups one or more git repositories plus their Fabric config, resources, and review state into a single working surface. | Managed by `Fabric Toolkit`; `uses` N `Git repository` (1:N). | Partially scaffolded in `pocs/fabric/web/src/mock/fixtures/workspaces.ts` (UI-side fixture); CLI-side workspace model pending. |
 | **Fabric Kit** | A versioned, installable bundle of Fabric Resources (prompts + scripts + assets + optional web extensions) published by an author for reuse. The unit of distribution. | `extends` `Fabric Resources`; `published into` `Fabric Kit Marketplace`; `install/remove/register` by `Fabric Toolkit`. | `pocs/fabric-kits/*` (PRD kit example); manifest at `pocs/fabric-kits/<kit>/resources.toml`; installer logic in `pocs/fabric/src/kits.js`. |
 | **Fabric Kit Marketplace** | Discovery and distribution registry for kits. Resolves a kit name or git URL to a downloadable, versioned artifact. | `Fabric Kit` is `published into` it. | Mocked in `pocs/fabric/web/src/mock/fixtures/marketplaces.ts`; real backend not yet implemented. |
-| **Fabric Resources** | The content model Fabric manages. A container of three primary content types — **Fabric Prompt**, **Fabric Script**, **Fabric Asset** — plus optional **Fabric Web Extension** contributions. | `contains`: `Fabric Prompt`, `Fabric Script`, `Fabric Asset`, `Fabric Web Extension`. `Fabric Kit` `extends` Resources; `Fabric Config` `operates` on Resources. | Declared in `resources.toml` (`prompt_files`, `script_files`); schema handled by `pocs/fabric/src/resources.js`. |
-| **Fabric Prompt** | A typed, addressable unit of authored agent instruction. Subtypes: **Skill** (directly invokable), **Template** (static layout), **Rules** (mode-specific body), **Middleware** (pre/post cross-cutting), **Subagent** (delegated persona). | `uses` `Fabric Script`; `uses` `Fabric Asset`; `produces` `Agent Skill` and `Agent Sub Agent` via registration. | `pocs/fabric/prompts/*.md` + typed registry in `pocs/fabric/src/prompts.js` (`allowedPromptTypes` = `skill | agent | rules | template | middleware | workflow | checklist`). |
-| **Fabric Script** | An executable helper (small program, usually node/bash) that a prompt can call during a workflow. Bridges deterministic computation into prompt flows. | `uses` `Fabric Asset`. Referenced by `Fabric Prompt`. | Hooked through `script_files` in `resources.toml`; execution plumbed via `pocs/fabric/src/scripts.js`. |
+| **Fabric Resources** | The content model Fabric manages. A container of four primary content types — **Fabric Prompt**, **Fabric Script**, **Fabric API**, **Fabric Asset** — plus optional **Fabric Web Extension** contributions. | `contains`: `Fabric Prompt`, `Fabric Script`, `Fabric API`, `Fabric Asset`, `Fabric Web Extension`. `Fabric Kit` `extends` Resources; `Fabric Config` `operates` on Resources. | Declared in `resources.toml` (`prompt_files`, `script_files`; `api_files` pending); schema handled by `pocs/fabric/src/resources.js`. |
+| **Fabric Prompt** | A typed, addressable unit of authored agent instruction. Subtypes: **Skill** (directly invokable), **Template** (static layout), **Rules** (mode-specific body), **Middleware** (pre/post cross-cutting), **Subagent** (delegated persona). | `uses` `Fabric Script`; `uses` `Fabric API`; `uses` `Fabric Asset`; `produces` `Agent Skill` and `Agent Sub Agent` via registration. | `pocs/fabric/prompts/*.md` + typed registry in `pocs/fabric/src/prompts.js` (`allowedPromptTypes` = `skill | agent | rules | template | middleware | workflow | checklist`). |
+| **Fabric Script** | An executable helper (small program, usually node/bash) that a prompt can call during a workflow. Bridges deterministic computation into prompt flows. | `uses` `Fabric Asset`; `uses` `Fabric API` (via SDK). Referenced by `Fabric Prompt`. | Hooked through `script_files` in `resources.toml`; execution plumbed via `pocs/fabric/src/scripts.js`. |
+| **Fabric API** | A declarative description of an external HTTP service (`*.api.toml`: `base_url`, `default_headers`, optional `auth_ref`). Invokable from the CLI (`fabric api call <service> …`), from scripts via the `fabric.api` SDK, or referenced in prompt bodies as shell text that the hosting agent executes. Lets Fabric call third-party APIs (GitHub, OpenAI, internal services) without re-implementing auth and base URLs in every prompt or script. | Part of `Fabric Resources`; `uses` credentials from `Fabric Config` (`~/.fabric/auth.toml`, global-only); consumed by `Fabric Prompt` (as shell snippet) and `Fabric Script` (via SDK); registered through `api_files` globs in `resources.toml`. | Not yet implemented. Design + plan captured in the orchestrator repo under `docs/superpowers/specs/2026-04-24-fabric-api-command-design.md` and `docs/superpowers/plans/2026-04-24-fabric-api-command.md`. v1 scope: `bearer` / `basic` / `header` / `none` auth types; CLI surface `fabric api call|list|help`. |
 | **Fabric Asset** | Static data file consumed by prompts or scripts: `.json`, `.toml`, `.css`, `.yaml`, etc. Examples: schema files, templates, reference datasets. | Consumed by `Fabric Prompt` and `Fabric Script`. | Ships inside a kit or resource directory; no distinct module — served directly from disk. |
 | **Fabric Web Extension** | A kit-contributed UI affordance for `Fabric WEB App` / `Fabric VS Code Plugin`: additional views, renderers, toolbar actions, highlight packs. Delivered through kit resources. | Part of `Fabric Resources`; consumed by `Fabric WEB App` and `Fabric VS Code Plugin`. | `WebExtension` type + `workspaceContributions` in `pocs/fabric/web/src/types.ts`; demo renderers in `pocs/fabric/web/src/ui/views/workspace/renderers/`. |
 
@@ -147,18 +148,25 @@ A flat list of the edges in the diagram, grouped by source. Useful when chasing 
 **Fabric Resources → ...**
 - `contains` `Fabric Prompt`
 - `contains` `Fabric Script`
+- `contains` `Fabric API`
 - `contains` `Fabric Asset`
 - `contains` `Fabric Web Extension`
 
 **Fabric Prompt → ...**
 - `contains` subtypes: Skill, Template, Rules, Middleware, Subagent
 - `uses` `Fabric Script`
+- `uses` `Fabric API`
 - `uses` `Fabric Asset`
 - `produces` `Agent Skill`
 - `produces` `Agent Sub Agent`
 
 **Fabric Script → ...**
 - `uses` `Fabric Asset`
+- `uses` `Fabric API` (via SDK)
+
+**Fabric API → ...**
+- `uses` `Fabric Config` (credentials from `~/.fabric/auth.toml`)
+- consumed by `Fabric Prompt` (shell snippet) and `Fabric Script` (SDK)
 
 ## PoC coverage summary
 
@@ -171,6 +179,7 @@ The diagram is aspirational; the current PoC covers a subset.
 | Fabric Config (local + global) | ✅ `.fabric/resources.toml` + `~/.fabric/resources.toml` |
 | Fabric Resources (prompts + scripts + assets) | ✅ Prompt + script manifests; Asset is file-level only. |
 | Fabric Prompt subtypes | ✅ `skill`, `rules`, `template`, `middleware`, `agent`, `workflow`, `checklist` (in `prompts.js`) |
+| Fabric API | ❌ Spec + plan only (`docs/superpowers/specs/2026-04-24-fabric-api-command-design.md`); `src/apis.js`, `src/auth.js`, `api_files` manifest field, and `fabric api call|list|help` CLI pending |
 | Fabric Kit | ✅ `pocs/fabric-kits/` + `src/kits.js` |
 | Fabric Kit Marketplace | 🟡 Mocked in `fabric-web`; no real backend |
 | Fabric WEB App | 🟡 React + Vite app at `pocs/fabric/web/`; Workspaces viewer in progress |
@@ -184,3 +193,7 @@ The diagram is aspirational; the current PoC covers a subset.
 | Agent Skill / Sub Agent generation | ✅ `fabric register` writes to `.claude/` and `.agents/` |
 
 Legend: ✅ implemented · 🟡 partial · ❌ not started.
+
+## Full domain diagram
+
+![Cyber Fabric Domain Model — Full](domain.drawio.png)
