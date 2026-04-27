@@ -6,6 +6,9 @@ const path = require("node:path");
 
 const planStatus = require("../scripts/plan-status");
 const planResume = require("../scripts/plan-resume");
+const planPhaseValidate = require("../scripts/plan-phase-validate");
+const planBriefWrite = require("../scripts/plan-brief-write");
+const planLint = require("../scripts/plan-lint");
 
 function makePlanDir(label) {
   return fs.mkdtempSync(path.join(os.tmpdir(), `planner-test-${label}-`));
@@ -352,6 +355,413 @@ test("plan-resume with --apply rewrites plan.toml downgrading reopened phases an
     assert.equal(reread.plan.execution_status, "in_progress");
   } finally {
     fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+const HEALTHY_PHASE_BODY = `# Phase 1: Overview
+
+## Context Boundary
+Disregard all previous chat context.
+
+## Phase Metadata
+- Plan: \`/abs/plan/plan.toml\`
+- Phase: 1 of 3
+
+## Load
+1. Read brief from disk.
+
+## Dispatch
+- Inline.
+
+## Task
+Do the thing.
+
+## Rules
+- MUST do X.
+
+## User Decisions
+None.
+
+## Output Format
+- File: docs/PRD.md
+
+## Acceptance Criteria
+- [ ] File exists.
+
+## Handoff
+On success: report done.
+`;
+
+const MINIMAL_BRIEF_BODY = `# Brief 1: Overview
+
+## Context Boundary
+Self-contained.
+
+## Phase Metadata
+- Phase: 1
+
+## Load Instructions
+- path = ...
+
+## Phase File Structure
+H2 headings: Context Boundary, Phase Metadata, Load, Dispatch, Task, Rules, User Decisions, Output Format, Acceptance Criteria, Handoff.
+
+## Rules To Inline
+none
+
+## User Decisions To Embed
+none
+
+## Acceptance Criteria For The Compiled Phase File
+- All headings present.
+`;
+
+function writePhaseAndBrief(dir, phaseBody = HEALTHY_PHASE_BODY, briefBody = MINIMAL_BRIEF_BODY) {
+  const phasePath = path.join(dir, "phase-01-overview.md");
+  const briefPath = path.join(dir, "brief-01-overview.md");
+  fs.writeFileSync(phasePath, phaseBody, "utf8");
+  fs.writeFileSync(briefPath, briefBody, "utf8");
+  return { phasePath, briefPath };
+}
+
+test("plan-phase-validate throws when phase file or brief is missing", () => {
+  const dir = makePlanDir("validate-missing");
+  try {
+    assert.throws(
+      () => planPhaseValidate.run([path.join(dir, "missing.md"), path.join(dir, "brief.md")], makeContext(process.cwd())),
+      /not found/,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-phase-validate returns overall PASS for a healthy phase file", () => {
+  const dir = makePlanDir("validate-healthy");
+  try {
+    const { phasePath, briefPath } = writePhaseAndBrief(dir);
+    const result = runScript(planPhaseValidate, [phasePath, briefPath], process.cwd());
+    assert.equal(result.overall, "PASS");
+    assert.equal(result.categories.line_budget.status, "PASS");
+    assert.equal(result.categories.unresolved_placeholders.status, "PASS");
+    assert.equal(result.categories.required_headings.status, "PASS");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-phase-validate FAILs line_budget when the phase file exceeds the limit", () => {
+  const dir = makePlanDir("validate-oversize");
+  try {
+    const oversized = HEALTHY_PHASE_BODY + Array(1100).fill("filler line").join("\n") + "\n";
+    const { phasePath, briefPath } = writePhaseAndBrief(dir, oversized);
+    const result = runScript(planPhaseValidate, [phasePath, briefPath], process.cwd());
+    assert.equal(result.categories.line_budget.status, "FAIL");
+    assert.ok(result.categories.line_budget.lines > 1000);
+    assert.equal(result.overall, "FAIL");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-phase-validate FAILs unresolved_placeholders when {placeholder} appears outside fenced code blocks", () => {
+  const dir = makePlanDir("validate-placeholders");
+  try {
+    const body = HEALTHY_PHASE_BODY.replace("Do the thing.", "Do {N} {slug} things.");
+    const { phasePath, briefPath } = writePhaseAndBrief(dir, body);
+    const result = runScript(planPhaseValidate, [phasePath, briefPath], process.cwd());
+    assert.equal(result.categories.unresolved_placeholders.status, "FAIL");
+    assert.ok(result.categories.unresolved_placeholders.occurrences.length >= 2);
+    assert.equal(result.overall, "FAIL");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-phase-validate ignores {placeholders} that appear inside fenced code blocks", () => {
+  const dir = makePlanDir("validate-placeholders-fenced");
+  try {
+    const body = HEALTHY_PHASE_BODY + "\n\n## Extra fenced\n\n\`\`\`text\n{N} and {slug} are fine inside fences\n\`\`\`\n";
+    const { phasePath, briefPath } = writePhaseAndBrief(dir, body);
+    const result = runScript(planPhaseValidate, [phasePath, briefPath], process.cwd());
+    assert.equal(result.categories.unresolved_placeholders.status, "PASS");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-phase-validate FAILs required_headings when a required H2 is missing", () => {
+  const dir = makePlanDir("validate-missing-h2");
+  try {
+    const body = HEALTHY_PHASE_BODY.replace("## Dispatch\n- Inline.\n\n", "");
+    const { phasePath, briefPath } = writePhaseAndBrief(dir, body);
+    const result = runScript(planPhaseValidate, [phasePath, briefPath], process.cwd());
+    assert.equal(result.categories.required_headings.status, "FAIL");
+    assert.ok(result.categories.required_headings.missing.includes("Dispatch"));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+function makeBriefSpec(overrides = {}) {
+  return {
+    number: 1,
+    total_phases: 2,
+    title: "Overview and Actors",
+    slug: "overview",
+    phase_file: "phase-01-overview.md",
+    brief_file: "brief-01-overview.md",
+    plan_dir: "/abs/plan",
+    kind: "delivery",
+    depends_on: [],
+    inputs: [],
+    output_files: ["docs/PRD.md"],
+    outputs: ["out/phase-01-actors.md"],
+    template_sections: [1, 2],
+    checklist_sections: [],
+    skills_loaded: [{ id: "prd-template", role: "companion", purpose: "PRD layout" }],
+    subagents_dispatched: [],
+    phase_file_lines: 380,
+    load_instructions: [
+      { path: "/abs/kit/template.md", reason: "extract sections 1-2", sections: "H2 1-2" },
+    ],
+    rules_to_inline: [
+      { source: "prd-template", section: "H2 Overview", purpose: "PRD overview headings" },
+    ],
+    user_decisions: [],
+    ...overrides,
+  };
+}
+
+test("plan-brief-write throws when --spec and --spec-file are both missing", () => {
+  const dir = makePlanDir("brief-no-spec");
+  const outPath = path.join(dir, "brief-01-overview.md");
+  try {
+    assert.throws(
+      () => planBriefWrite.run(["--output", outPath], makeContext(process.cwd())),
+      /--spec/,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-brief-write throws when spec is missing required fields", () => {
+  const dir = makePlanDir("brief-bad-spec");
+  const outPath = path.join(dir, "brief-01-overview.md");
+  try {
+    const incomplete = { number: 1 };
+    assert.throws(
+      () => planBriefWrite.run(["--output", outPath, "--spec", JSON.stringify(incomplete)], makeContext(process.cwd())),
+      /title|slug|brief_file|phase_file|total_phases/,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-brief-write writes a brief file with all required H2 headings in order", () => {
+  const dir = makePlanDir("brief-write-headings");
+  const outPath = path.join(dir, "brief-01-overview.md");
+  try {
+    runScript(planBriefWrite, ["--output", outPath, "--spec", JSON.stringify(makeBriefSpec())], process.cwd());
+    const body = fs.readFileSync(outPath, "utf8");
+    const headings = ["Context Boundary", "Phase Metadata", "Load Instructions", "Phase File Structure", "Rules To Inline", "User Decisions To Embed", "Acceptance Criteria For The Compiled Phase File"];
+    let lastIndex = -1;
+    for (const heading of headings) {
+      const idx = body.indexOf(`## ${heading}`);
+      assert.ok(idx > lastIndex, `heading "${heading}" missing or out of order`);
+      lastIndex = idx;
+    }
+    assert.match(body, /^# Brief 1: Overview and Actors/m);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-brief-write embeds load instructions, rules, and skills_loaded entries", () => {
+  const dir = makePlanDir("brief-write-content");
+  const outPath = path.join(dir, "brief-01-overview.md");
+  try {
+    runScript(planBriefWrite, ["--output", outPath, "--spec", JSON.stringify(makeBriefSpec())], process.cwd());
+    const body = fs.readFileSync(outPath, "utf8");
+    assert.match(body, /\/abs\/kit\/template\.md/);
+    assert.match(body, /extract sections 1-2/);
+    assert.match(body, /prd-template/);
+    assert.match(body, /PRD overview headings/);
+    assert.match(body, /companion/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-brief-write writes 'none' under User Decisions when none are provided", () => {
+  const dir = makePlanDir("brief-write-decisions-empty");
+  const outPath = path.join(dir, "brief-01-overview.md");
+  try {
+    runScript(planBriefWrite, ["--output", outPath, "--spec", JSON.stringify(makeBriefSpec())], process.cwd());
+    const body = fs.readFileSync(outPath, "utf8");
+    const decisionsBlock = body.split("## User Decisions To Embed")[1].split("##")[0];
+    assert.match(decisionsBlock, /none/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-brief-write embeds each user decision when provided", () => {
+  const dir = makePlanDir("brief-write-decisions");
+  const outPath = path.join(dir, "brief-01-overview.md");
+  try {
+    const spec = makeBriefSpec({
+      user_decisions: [
+        { question: "Use OAuth or SSO?", options: ["OAuth", "SSO"], default: "OAuth", record_in: "manifest:plan.auth_choice" },
+      ],
+    });
+    runScript(planBriefWrite, ["--output", outPath, "--spec", JSON.stringify(spec)], process.cwd());
+    const body = fs.readFileSync(outPath, "utf8");
+    assert.match(body, /Use OAuth or SSO\?/);
+    assert.match(body, /OAuth/);
+    assert.match(body, /manifest:plan\.auth_choice/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+function stageHealthyPlan(planDir) {
+  const phases = [
+    { status: "pending", slug: "p1", outputs: [] },
+    { status: "pending", slug: "p2", depends_on: [1] },
+  ];
+  writePlanToml(planDir, planTomlWithStatuses(phases));
+  for (const phase of [{ n: 1, slug: "p1" }, { n: 2, slug: "p2" }]) {
+    const padded = String(phase.n).padStart(2, "0");
+    fs.writeFileSync(path.join(planDir, `brief-${padded}-${phase.slug}.md`), "# brief\n", "utf8");
+    fs.writeFileSync(path.join(planDir, `phase-${padded}-${phase.slug}.md`), "# phase\n", "utf8");
+  }
+}
+
+test("plan-lint throws when plan.toml is missing", () => {
+  const planDir = makePlanDir("lint-no-toml");
+  try {
+    assert.throws(() => planLint.run([planDir], makeContext(process.cwd())), /plan\.toml/);
+  } finally {
+    fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+test("plan-lint returns overall PASS for a healthy plan", () => {
+  const planDir = makePlanDir("lint-healthy");
+  try {
+    stageHealthyPlan(planDir);
+    const result = runScript(planLint, [planDir], process.cwd());
+    assert.equal(result.overall, "PASS");
+    assert.equal(result.categories.manifest_schema.status, "PASS");
+    assert.equal(result.categories.lifecycle.status, "PASS");
+    assert.equal(result.categories.structural.status, "PASS");
+    assert.equal(result.categories.file_presence.status, "PASS");
+    assert.equal(result.categories.budget.status, "PASS");
+  } finally {
+    fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+test("plan-lint FAILs file_presence when a brief or phase file is missing", () => {
+  const planDir = makePlanDir("lint-missing-file");
+  try {
+    stageHealthyPlan(planDir);
+    fs.unlinkSync(path.join(planDir, "phase-02-p2.md"));
+    const result = runScript(planLint, [planDir], process.cwd());
+    assert.equal(result.categories.file_presence.status, "FAIL");
+    assert.equal(result.categories.file_presence.missing_files.length, 1);
+    assert.match(result.categories.file_presence.missing_files[0].path, /phase-02-p2\.md$/);
+    assert.equal(result.overall, "FAIL");
+  } finally {
+    fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+test("plan-lint FAILs structural when phase numbering is non-contiguous", () => {
+  const planDir = makePlanDir("lint-numbering");
+  try {
+    stageHealthyPlan(planDir);
+    const body = fs.readFileSync(path.join(planDir, "plan.toml"), "utf8").replace(/number = 2/, "number = 3");
+    fs.writeFileSync(path.join(planDir, "plan.toml"), body, "utf8");
+    const result = runScript(planLint, [planDir], process.cwd());
+    assert.equal(result.categories.structural.status, "FAIL");
+    assert.ok(result.categories.structural.issues.some((i) => /numbering|expected/.test(i.issue)));
+  } finally {
+    fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+test("plan-lint FAILs structural when depends_on references a non-existent phase", () => {
+  const planDir = makePlanDir("lint-bad-depends-on");
+  try {
+    stageHealthyPlan(planDir);
+    const body = fs.readFileSync(path.join(planDir, "plan.toml"), "utf8").replace(/depends_on = \[1\]/, "depends_on = [99]");
+    fs.writeFileSync(path.join(planDir, "plan.toml"), body, "utf8");
+    const result = runScript(planLint, [planDir], process.cwd());
+    assert.equal(result.categories.structural.status, "FAIL");
+    assert.ok(result.categories.structural.issues.some((i) => /depends_on/.test(i.issue)));
+  } finally {
+    fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+test("plan-lint FAILs lifecycle when lifecycle is not one of the allowed enum values", () => {
+  const planDir = makePlanDir("lint-bad-lifecycle");
+  try {
+    stageHealthyPlan(planDir);
+    const body = fs.readFileSync(path.join(planDir, "plan.toml"), "utf8").replace(/lifecycle = "gitignore"/, 'lifecycle = "bogus"');
+    fs.writeFileSync(path.join(planDir, "plan.toml"), body, "utf8");
+    const result = runScript(planLint, [planDir], process.cwd());
+    assert.equal(result.categories.lifecycle.status, "FAIL");
+  } finally {
+    fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+test("plan-lint FAILs budget when a phase file exceeds 1000 lines", () => {
+  const planDir = makePlanDir("lint-budget");
+  try {
+    stageHealthyPlan(planDir);
+    const oversized = "# phase\n" + Array(1100).fill("filler line").join("\n") + "\n";
+    fs.writeFileSync(path.join(planDir, "phase-01-p1.md"), oversized, "utf8");
+    const result = runScript(planLint, [planDir], process.cwd());
+    assert.equal(result.categories.budget.status, "FAIL");
+    assert.equal(result.categories.budget.over_budget.length, 1);
+    assert.match(result.categories.budget.over_budget[0].path, /phase-01-p1\.md$/);
+  } finally {
+    fs.rmSync(planDir, { recursive: true, force: true });
+  }
+});
+
+test("plan-brief-write --dry-run does not write the file", () => {
+  const dir = makePlanDir("brief-write-dryrun");
+  const outPath = path.join(dir, "brief-01-overview.md");
+  try {
+    const result = runScript(planBriefWrite, ["--output", outPath, "--spec", JSON.stringify(makeBriefSpec()), "--dry-run"], process.cwd());
+    assert.equal(result.wrote, false);
+    assert.equal(fs.existsSync(outPath), false);
+    assert.match(result.markdown, /^# Brief 1: Overview and Actors/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("plan-phase-validate FAILs required_headings when H2 order is wrong", () => {
+  const dir = makePlanDir("validate-h2-order");
+  try {
+    const body = HEALTHY_PHASE_BODY.replace(
+      "## Load\n1. Read brief from disk.\n\n## Dispatch\n- Inline.\n\n",
+      "## Dispatch\n- Inline.\n\n## Load\n1. Read brief from disk.\n\n",
+    );
+    const { phasePath, briefPath } = writePhaseAndBrief(dir, body);
+    const result = runScript(planPhaseValidate, [phasePath, briefPath], process.cwd());
+    assert.equal(result.categories.required_headings.status, "FAIL");
+    assert.equal(result.categories.required_headings.out_of_order, true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
 
