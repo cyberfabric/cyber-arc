@@ -69,6 +69,7 @@ Use fabric prompt script authoring mode. This mode produces a JavaScript file un
    - MAY read files via `fs.readFileSync` / `fs.existsSync` / `fs.readdirSync`
    - MAY read environment variables from `context.env`
    - MAY call fabric's public API from `require("@cyberfabric/fabric")`
+   - MAY require third-party packages declared in the kit's own `package.json`; `fabric register` installs them via the per-kit dependency feature (see `fabric prompt get kit-dependencies` for declaration, strategies, and runtime reachability)
    - MUST NOT perform network IO (no `http`, `https`, `net`, `dgram`, `dns`, `tls`)
    - MUST NOT spawn subprocesses (no `child_process`)
    - MUST NOT write, rename, or delete files outside the paths the user explicitly passed as args — and never inside fabric's own manifest files except via public helpers like `ensureResourcesManifest`
@@ -80,7 +81,8 @@ Use fabric prompt script authoring mode. This mode produces a JavaScript file un
    - to use fabric internals, require the curated public entry: `const { ... } = require("@cyberfabric/fabric");`
    - MUST NOT use relative `require("../../../fabric/src/*")` — that path couples the kit to a specific monorepo layout and breaks standalone distribution
    - MUST NOT import fabric-private modules that are not re-exported from `@cyberfabric/fabric`; if a needed primitive is missing from the public entry, treat it as a fabric-core follow-up and surface it as an open question instead of reaching for internals
-   - dependencies declared in Node core (`node:fs`, `node:path`, `node:os`) are always available; third-party packages are available only if fabric's own `package.json` declares them
+   - Node core (`node:fs`, `node:path`, `node:os`, etc.) is always available; third-party packages must be declared in the kit's own `package.json` (preferred — installed by `fabric register` via the per-kit dependency feature; see `fabric prompt get kit-dependencies`) or, when the package is genuinely a fabric-core primitive, in `pocs/fabric/package.json`
+   - MUST NOT rely on a third-party package that is reachable only through a sibling kit's `node_modules/` or through a global npm install — Node's resolver walks ancestors of the script file, so cross-kit reach is not portable
 <!-- /append -->
 
 <!-- append "script_error_contract" -->

@@ -49,7 +49,7 @@ Identify the primary purpose exactly once, so review expectations are calibrated
 - `IO helper` — reads or emits files, tightly bounded to user-supplied paths
 - `integration` — reaches into fabric internals or external systems (rare, must be justified)
 
-Dependencies: list every `require` target. Circular dependencies, relative reaches into fabric internals (`../../../fabric/src/*`), or unlisted third-party packages are classification-level findings.
+Dependencies: list every `require` target. Classification-level findings: circular dependencies, relative reaches into fabric internals (`../../../fabric/src/*`), and third-party packages that are not declared in either the kit's own `package.json` (per-kit dependency feature, see `fabric prompt get kit-dependencies`) or `pocs/fabric/package.json` (fabric-core deps reachable through `pocs/node_modules/`).
 <!-- /append -->
 
 <!-- append "script_engineering_L2_clarity" -->
@@ -139,14 +139,16 @@ Fabric reads the exported `interface` object verbatim to render `fabric script h
 - require fabric internals only via `require("@cyberfabric/fabric")`
 - use `context.cwd`, `context.homeDir`, `context.fabricHome` for path resolution; do not assume `process.cwd()` matches the caller's working directory
 - use `path.isAbsolute` / `path.join` for path construction; never string-concatenate paths with `/`
+- declare third-party packages the script imports in the kit's own `package.json` so `fabric register` installs them via the per-kit dependency feature (see `fabric prompt get kit-dependencies` for declaration, strategies, and runtime reachability)
 
 **MUST NOT**:
 - `require("../../../fabric/src/*")` — couples the kit to a specific monorepo layout; failed when the kit is distributed standalone; closed by the `@cyberfabric/fabric` package
 - assume a specific Node version beyond what fabric itself requires; if a newer API is needed, document it in `interface.notes`
-- depend on third-party packages that fabric's own `package.json` does not declare
+- depend on third-party packages that are declared neither in the kit's own `package.json` nor in `pocs/fabric/package.json`; cross-kit `require` (reaching into a sibling kit's `node_modules/`) is unreachable by Node's resolver and a portability bug
 
 **When a primitive is missing from `@cyberfabric/fabric`**:
-- surface it as a fabric-core follow-up, not a local shortcut
+- if it is genuinely a third-party package (npm registry), declare it in the kit's `package.json` — that is the portable answer; no fabric-core change is needed
+- if it is fabric-private state or behavior, surface it as a fabric-core follow-up to be re-exported from `@cyberfabric/fabric`, not as a local shortcut into `../../fabric/src`
 - in the interim, stop and ask; do not reach into `../../fabric/src`
 <!-- /append -->
 

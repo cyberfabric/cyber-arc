@@ -106,7 +106,7 @@ Apply the same defect lenses regardless of script style.
 | Argument parsing | Missing `--flag` detection, positional-vs-flag confusion, `--flag` with no value, boolean flag accidentally requires a value |
 | Path resolution | `context.cwd` vs `process.cwd()` mismatch, missing `path.isAbsolute` guard, `..` traversal from user input, trailing-slash differences |
 | Filesystem IO | Read before `fs.existsSync`, write without the target directory existing, partial write on error, non-atomic write |
-| Require graph | Relative reach into fabric internals, missing third-party package, circular require, require-time side effect |
+| Require graph | Relative reach into fabric internals; third-party package undeclared in any reachable `package.json`; package declared in kit `package.json` but kit not installed (fabric register skipped or `--no-install` used without prior install); cross-kit `require` reaching a sibling kit's `node_modules/`; circular require; require-time side effect (see `fabric prompt get kit-dependencies` for the per-kit dependency feature) |
 | Side effects | Hidden network IO, hidden subprocess, silent write outside user-provided path, direct manifest edit |
 | Determinism | Reliance on wall-clock, random, or undocumented external state; unstable ordering of directory listings or Set iteration |
 | Error handling | Silent swallow, generic `Error("something went wrong")` without parameter context, double-throw, unhandled rejection in `run()` |
