@@ -1,8 +1,8 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const TOML = require("@iarna/toml");
 const { parseArgs, requireString } = require("../lib/args");
 const { KEBAB_CASE } = require("../lib/slugify");
-const { emitDocument } = require("../lib/toml");
 
 const SCRIPT_ID = "plan-manifest-write";
 
@@ -304,10 +304,7 @@ function run(args, context) {
   }
 
   const tomlObject = buildTomlObject(spec);
-  const tomlText = emitDocument([
-    { kind: "table", header: "plan", table: tomlObject.plan },
-    { kind: "array-of-tables", header: "phases", items: tomlObject.phases },
-  ]);
+  const tomlText = TOML.stringify(tomlObject);
 
   let wrote = false;
   if (!dryRun) {
@@ -344,7 +341,7 @@ module.exports = {
     details: [
       "Validates the JSON spec against the plan / phase schema (required fields, enum values, kebab-case ids, file-name conventions, depends_on monotonicity, integration-entry shape) and either writes plan.toml or returns the rendered TOML in dry-run.",
       "Phase entries support skills_loaded[] and subagents_dispatched[] arrays so per-phase integration choices recorded by planner-brainstorm round-trip into the manifest verbatim.",
-      "TOML emission uses a kit-local emitter so the script has no third-party runtime dependency; entries are written in the canonical key order (no alphabetic re-sort) so reviewers can diff manifests deterministically against the spec.",
+      "TOML emission uses @iarna/toml (declared as a kit dependency in package.json and installed by `fabric register`); entries are written in the canonical key order (no alphabetic re-sort) so reviewers can diff manifests deterministically against the spec.",
     ],
     usage: [
       "fabric script run plan-manifest-write --output <path-to-plan.toml> ( --spec '<json>' | --spec-file <path> ) [--dry-run]",
