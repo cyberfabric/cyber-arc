@@ -62,7 +62,7 @@ Produce a phase list with: `number`, `title`, `slug`, `kind` (`delivery` / `life
 <!-- append "planner_brainstorm_phase3_skill_subagent_discovery" -->
 **Phase 3 — skill / sub-agent integration per phase.**
 
-1. Invoke the `fabric-observer` skill (or your platform's equivalent) ONCE to enumerate skills and sub-agents available in this session. Capture their names and one-line descriptions.
+1. Invoke the `fabric-observer` skill (or your platform's equivalent) ONCE to enumerate skills and sub-agents available in this session. Capture their names and one-line descriptions. The planner kit ships its own `fabric-planner-agent` (modes: `compile` / `execute` / `audit` / `rebuild-brief`) — it should appear in the discovery output when the kit is registered, and it is the default delegate for compile + execute work unless the user picks a more specialized sub-agent for a phase.
 2. For each candidate phase from Phase 2, scan the skill / sub-agent inventory for plausible matches against that phase's work. Group candidates by role:
    - **load-as-companion**: rules / methodology to inline at runtime (`prompt-engineering`, `prd-template`, `script-engineering`, etc.). The companion's body is loaded via `fabric prompt get {id}` inside the phase file's `Load` section.
    - **invoke-as-tool**: a skill / fabric script the phase calls for deterministic transformations (`prompt-scaffold`, `script-scaffold`).

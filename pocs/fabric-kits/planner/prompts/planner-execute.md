@@ -31,13 +31,15 @@ Decide dispatch path per the phase's `subagents_dispatched` field in the manifes
 - Verify the return per `planner-subagent-protocol L4 parent verification`. On any verification failure, mark the phase `failed` with the failing check named, and stop.
 - For multiple sub-agents on the same phase, dispatch sequentially unless their `intermediate_outputs` are guaranteed disjoint (rare in execute mode — see `planner-subagent-protocol L5 parallel fan-out`).
 
-**If `subagents_dispatched` is empty (inline)**:
-- Load every entry in `skills_loaded` (`role = companion`) via `fabric prompt get {id}`.
-- Read every file listed in `input_files` and `inputs` and retain only the section ranges named in the brief.
-- Follow the phase file's `Task` section step by step. For every step that maps to a fabric script, invoke it. For every step that requires judgment, apply the loaded companion methodology.
-- After producing the declared `output_files` and `outputs`, verify each artifact exists on disk before claiming success — same Acceptance Criteria as the dispatch path.
+**If `subagents_dispatched` is empty (inline or default-agent fallback)**:
+- **Preferred fallback** when `fabric-planner-agent` is registered: dispatch to it with payload `mode: execute, plan_dir: <abs>, phase_number: <N>, phase_file: <name>` so the phase runs in an isolated context with the canonical `planner-agent-execute` discipline. This is materially safer than inline for non-trivial phases since it enforces the Context Boundary by construction.
+- **Inline** when no agent infrastructure is available, or when the phase is trivial enough that the isolation overhead is wasted:
+  - Load every entry in `skills_loaded` (`role = companion`) via `fabric prompt get {id}`.
+  - Read every file listed in `input_files` and `inputs` and retain only the section ranges named in the brief.
+  - Follow the phase file's `Task` section step by step. For every step that maps to a fabric script, invoke it. For every step that requires judgment, apply the loaded companion methodology.
+  - After producing the declared `output_files` and `outputs`, verify each artifact exists on disk before claiming success — same Acceptance Criteria as the dispatch path.
 
-**No third execution path**: the planner does NOT delegate to ralphex or any external runner. The two paths above are the entire surface.
+**No third execution path**: the planner does NOT delegate to ralphex or any external runner. The dispatch / inline paths above are the entire surface.
 <!-- /append -->
 
 <!-- append "planner_execute_status_update" -->

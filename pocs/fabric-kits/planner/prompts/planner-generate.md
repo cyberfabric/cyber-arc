@@ -77,7 +77,7 @@ The compilation path depends on the user's choice in Step 3a.
 **Path 1 — Sub-agent dispatch (default, recommended):**
 
 1. Build dependency layers from `phases[].depends_on`: layer 0 = phases with empty `depends_on`; layer N = phases whose `depends_on` are all in layers 0..N-1.
-2. For each layer, dispatch one sub-agent per brief in parallel per `planner-subagent-protocol L2 input contract` (context boundary line + brief content read from disk + task statement: `compile the phase file from this brief`).
+2. For each layer, dispatch one sub-agent per brief in parallel per `planner-subagent-protocol L2 input contract`. The default compilation sub-agent shipped by this kit is `fabric-planner-agent` with payload `mode: compile, plan_dir: <abs>, phase_number: <N>, brief_file: <name>` — it loads `planner-agent-compile` rules and produces a validated phase file. If `planner-brainstorm` recorded a different sub-agent name in the brief's `subagents_dispatched` for compilation, that pick overrides the default.
 3. Await all returns of the layer per `L3 return contract` and verify each per `L4 parent verification`. Specifically for compilation: re-run `fabric script run plan-phase-validate {phase_file} {brief_file}` and require `overall = "PASS"`.
 4. On any verification failure, stop dispatching subsequent layers; surface the failing brief and the validator findings; do NOT mark the affected phase compiled.
 5. After all layers complete, all `phase-*.md` files exist on disk.
