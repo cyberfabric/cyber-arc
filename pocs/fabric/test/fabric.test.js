@@ -387,18 +387,22 @@ test("fabric register generates global Claude and Agents skill entry points", ()
     });
 
     assert.equal(result.status, 0);
-    assert.equal(result.stdout, "Registered 0 prompts into 2 skill roots\n");
+    assert.match(result.stdout, /^Registered \d+ prompts into 2 skill roots and 2 agent roots\n$/);
     assert.equal(result.stderr, "");
 
     const claudeHello = path.join(tempHome, ".claude", "skills", "fabric-hello", "SKILL.md");
     const claudeCodex = path.join(tempHome, ".claude", "skills", "fabric-codex", "SKILL.md");
     const agentsPipeline = path.join(tempHome, ".agents", "skills", "fabric-pipeline", "SKILL.md");
     const claudeMiddleware = path.join(tempHome, ".claude", "skills", "artifacts-english", "SKILL.md");
+    const claudeAgentsRoot = path.join(tempHome, ".claude", "agents");
+    const agentsAgentsRoot = path.join(tempHome, ".agents", "agents");
 
     assert.equal(fs.existsSync(claudeHello), false);
     assert.equal(fs.existsSync(claudeCodex), false);
     assert.equal(fs.existsSync(agentsPipeline), false);
     assert.equal(fs.existsSync(claudeMiddleware), false);
+    assert.equal(fs.existsSync(claudeAgentsRoot), true);
+    assert.equal(fs.existsSync(agentsAgentsRoot), true);
   } finally {
     fs.rmSync(tempHome, { recursive: true, force: true });
   }
@@ -439,7 +443,7 @@ test("fabric register --local generates skill entry points in the current worksp
     });
 
     assert.equal(result.status, 0);
-    assert.equal(result.stdout, "Registered 1 prompts into 2 skill roots\n");
+    assert.equal(result.stdout, "Registered 1 prompts into 2 skill roots and 2 agent roots\n");
     assert.equal(result.stderr, "");
 
     const localClaudeOnly = path.join(tempWorkspace, ".claude", "skills", "fabric-local-only", "SKILL.md");
@@ -490,7 +494,7 @@ test("fabric register --local --include-global generates local and global skill 
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /^Registered \d+ prompts into 2 skill roots\n$/);
+    assert.match(result.stdout, /^Registered \d+ prompts into 2 skill roots and 2 agent roots\n$/);
     assert.equal(result.stderr, "");
 
     const localClaudeOnly = path.join(tempWorkspace, ".claude", "skills", "fabric-local-only", "SKILL.md");
@@ -501,6 +505,143 @@ test("fabric register --local --include-global generates local and global skill 
     assert.match(fs.readFileSync(localClaudeOnly, "utf8"), /^---\nname: fabric-local-only\ndescription: "Local-only test skill: safe"\n---\n\nEXECUTE and FOLLOW `fabric prompt get local-only`\n$/);
   } finally {
     fs.rmSync(tempWorkspace, { recursive: true, force: true });
+  }
+});
+
+test("fabric register --local writes sub-agent entry points for type: agent prompts", () => {
+  const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-agent-local-"));
+
+  try {
+    fs.mkdirSync(path.join(tempWorkspace, ".fabric", "prompts"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempWorkspace, ".fabric", "resources.toml"),
+      "schema_version = 1\nprompt_files = [ \"prompts/*.md\" ]\nscript_files = [ ]\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(tempWorkspace, ".fabric", "prompts", "local-skill.md"),
+      [
+        "---",
+        "id: local-skill",
+        "type: skill",
+        "name: local-skill",
+        "description: Local skill: safe",
+        "---",
+        "",
+        "<!-- append \"body\" -->",
+        "Skill body",
+        "<!-- /append -->",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(tempWorkspace, ".fabric", "prompts", "local-agent.md"),
+      [
+        "---",
+        "id: local-agent",
+        "type: agent",
+        "name: local-agent",
+        "description: Local agent: persona",
+        "---",
+        "",
+        "<!-- append \"body\" -->",
+        "Agent body",
+        "<!-- /append -->",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const result = spawnSync(process.execPath, [cliPath, "register", "--local"], {
+      cwd: tempWorkspace,
+      encoding: "utf8",
+      env: buildCliEnv(),
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout, "Registered 2 prompts into 2 skill roots and 2 agent roots\n");
+    assert.equal(result.stderr, "");
+
+    const localClaudeSkill = path.join(tempWorkspace, ".claude", "skills", "fabric-local-skill", "SKILL.md");
+    const localAgentsSkill = path.join(tempWorkspace, ".agents", "skills", "fabric-local-skill", "SKILL.md");
+    const localClaudeAgent = path.join(tempWorkspace, ".claude", "agents", "fabric-local-agent.md");
+    const localAgentsAgent = path.join(tempWorkspace, ".agents", "agents", "fabric-local-agent.md");
+    const skillCrossClaudeAgent = path.join(tempWorkspace, ".claude", "agents", "fabric-local-skill.md");
+    const agentCrossClaudeSkill = path.join(tempWorkspace, ".claude", "skills", "fabric-local-agent", "SKILL.md");
+
+    assert.equal(fs.existsSync(localClaudeSkill), true);
+    assert.equal(fs.existsSync(localAgentsSkill), true);
+    assert.equal(fs.existsSync(localClaudeAgent), true);
+    assert.equal(fs.existsSync(localAgentsAgent), true);
+    assert.equal(fs.existsSync(skillCrossClaudeAgent), false);
+    assert.equal(fs.existsSync(agentCrossClaudeSkill), false);
+
+    const expectedAgentBody = [
+      "---",
+      "name: fabric-local-agent",
+      'description: "Local agent: persona"',
+      "---",
+      "",
+      "EXECUTE and FOLLOW `fabric prompt get local-agent`",
+      "",
+    ].join("\n");
+    assert.equal(fs.readFileSync(localClaudeAgent, "utf8"), expectedAgentBody);
+    assert.equal(fs.readFileSync(localAgentsAgent, "utf8"), expectedAgentBody);
+  } finally {
+    fs.rmSync(tempWorkspace, { recursive: true, force: true });
+  }
+});
+
+test("fabric register <path> generates global agent entry points for type: agent prompts in a kit", () => {
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-agent-kit-home-"));
+  const tempKit = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-agent-kit-"));
+
+  try {
+    fs.mkdirSync(path.join(tempKit, "prompts"), { recursive: true });
+    fs.writeFileSync(
+      path.join(tempKit, "resources.toml"),
+      "schema_version = 1\nprompt_files = [ \"prompts/*.md\" ]\nscript_files = [ ]\n",
+      "utf8"
+    );
+    fs.writeFileSync(
+      path.join(tempKit, "prompts", "kit-agent.md"),
+      [
+        "---",
+        "id: kit-agent",
+        "type: agent",
+        "name: kit-agent",
+        "description: Kit agent: scoped persona",
+        "---",
+        "",
+        "<!-- append \"body\" -->",
+        "Kit agent body",
+        "<!-- /append -->",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+
+    const result = spawnSync(process.execPath, [cliPath, "register", tempKit], {
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /^Registered resources from .* into .*\.fabric\/resources\.toml and generated \d+ prompts in 2 skill roots and 2 agent roots\n$/);
+    assert.equal(result.stderr, "");
+
+    const claudeAgent = path.join(tempHome, ".claude", "agents", "fabric-kit-agent.md");
+    const agentsAgent = path.join(tempHome, ".agents", "agents", "fabric-kit-agent.md");
+    const claudeSkill = path.join(tempHome, ".claude", "skills", "fabric-kit-agent", "SKILL.md");
+
+    assert.equal(fs.existsSync(claudeAgent), true);
+    assert.equal(fs.existsSync(agentsAgent), true);
+    assert.equal(fs.existsSync(claudeSkill), false);
+    assert.match(fs.readFileSync(claudeAgent, "utf8"), /^---\nname: fabric-kit-agent\ndescription: "Kit agent: scoped persona"\n---\n\nEXECUTE and FOLLOW `fabric prompt get kit-agent`\n$/);
+  } finally {
+    fs.rmSync(tempHome, { recursive: true, force: true });
+    fs.rmSync(tempKit, { recursive: true, force: true });
   }
 });
 
@@ -980,7 +1121,7 @@ test("fabric register ignores commented prompt file entries in the global regist
     });
 
     assert.equal(result.status, 0);
-    assert.equal(result.stdout, "Registered 0 prompts into 2 skill roots\n");
+    assert.equal(result.stdout, "Registered 0 prompts into 2 skill roots and 2 agent roots\n");
     assert.equal(result.stderr, "");
   } finally {
     fs.rmSync(tempHome, { recursive: true, force: true });
@@ -1008,7 +1149,7 @@ test("fabric register <path> adds resources to the global registry and generates
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /^Registered resources from .* into .*\.fabric\/resources\.toml and generated \d+ skills in 2 skill roots\n$/);
+    assert.match(result.stdout, /^Registered resources from .* into .*\.fabric\/resources\.toml and generated \d+ prompts in 2 skill roots and 2 agent roots\n$/);
     assert.equal(result.stderr, "");
     assert.equal(fs.existsSync(globalRegistry), true);
     assert.equal(fs.readFileSync(globalRegistry, "utf8").includes(path.join(kitFixturePath, "prompts", "*.md")), true);
@@ -1061,7 +1202,7 @@ test("fabric register --local <path> writes only to local registries and local s
     });
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /^Registered resources from .* into .*\.fabric\/resources\.toml and generated \d+ skills in 2 skill roots\n$/);
+    assert.match(result.stdout, /^Registered resources from .* into .*\.fabric\/resources\.toml and generated \d+ prompts in 2 skill roots and 2 agent roots\n$/);
     assert.equal(result.stderr, "");
     assert.equal(fs.existsSync(localRegistry), true);
     assert.equal(fs.existsSync(globalRegistry), true);
@@ -1102,7 +1243,7 @@ test("fabric register --local <path> --include-global writes local registries an
     const localClaudeHello = path.join(tempWorkspace, ".claude", "skills", "fabric-hello", "SKILL.md");
 
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /^Registered resources from .* into .*\.fabric\/resources\.toml and generated \d+ skills in 2 skill roots\n$/);
+    assert.match(result.stdout, /^Registered resources from .* into .*\.fabric\/resources\.toml and generated \d+ prompts in 2 skill roots and 2 agent roots\n$/);
     assert.equal(result.stderr, "");
     assert.equal(fs.existsSync(localRegistry), true);
     assert.equal(fs.readFileSync(localRegistry, "utf8").includes(path.join(kitFixturePath, "prompts", "*.md")), true);

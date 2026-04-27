@@ -21,10 +21,10 @@ function slugifySkillDirectoryName(value) {
 }
 
 function isRegistrablePromptType(type) {
-  return type === "skill";
+  return type === "skill" || type === "agent";
 }
 
-function buildSkillEntryContent(prompt) {
+function buildEntryFrontmatter(prompt) {
   return [
     "---",
     `name: ${getGeneratedSkillName(prompt)}`,
@@ -36,11 +36,27 @@ function buildSkillEntryContent(prompt) {
   ].join("\n");
 }
 
+function buildSkillEntryContent(prompt) {
+  return buildEntryFrontmatter(prompt);
+}
+
+function buildAgentEntryContent(prompt) {
+  return buildEntryFrontmatter(prompt);
+}
+
 function resolveTargetDirectories(options = {}) {
-  if (options.claudeSkillsDir || options.agentsSkillsDir) {
+  const hasOverride =
+    options.claudeSkillsDir ||
+    options.agentsSkillsDir ||
+    options.claudeAgentsDir ||
+    options.agentsAgentsDir;
+
+  if (hasOverride) {
     return {
       claudeSkillsDir: options.claudeSkillsDir,
       agentsSkillsDir: options.agentsSkillsDir,
+      claudeAgentsDir: options.claudeAgentsDir,
+      agentsAgentsDir: options.agentsAgentsDir,
     };
   }
 
@@ -50,6 +66,8 @@ function resolveTargetDirectories(options = {}) {
     return {
       claudeSkillsDir: path.join(cwd, ".claude", "skills"),
       agentsSkillsDir: path.join(cwd, ".agents", "skills"),
+      claudeAgentsDir: path.join(cwd, ".claude", "agents"),
+      agentsAgentsDir: path.join(cwd, ".agents", "agents"),
     };
   }
 
@@ -58,6 +76,8 @@ function resolveTargetDirectories(options = {}) {
   return {
     claudeSkillsDir: path.join(homeDir, ".claude", "skills"),
     agentsSkillsDir: path.join(homeDir, ".agents", "skills"),
+    claudeAgentsDir: path.join(homeDir, ".claude", "agents"),
+    agentsAgentsDir: path.join(homeDir, ".agents", "agents"),
   };
 }
 
@@ -91,29 +111,53 @@ function registerPrompts(options = {}) {
     .filter((prompt) => isRegistrablePromptType(prompt.type))
     .sort((left, right) => left.id.localeCompare(right.id));
 
-  validateDirectoryNames(promptMetadata);
+  const skillPrompts = promptMetadata.filter((prompt) => prompt.type === "skill");
+  const agentPrompts = promptMetadata.filter((prompt) => prompt.type === "agent");
 
-  const { claudeSkillsDir, agentsSkillsDir } = resolveTargetDirectories(options);
-  const targets = [claudeSkillsDir, agentsSkillsDir].filter(Boolean);
+  validateDirectoryNames(skillPrompts);
+  validateDirectoryNames(agentPrompts);
 
-  for (const targetDir of targets) {
+  const {
+    claudeSkillsDir,
+    agentsSkillsDir,
+    claudeAgentsDir,
+    agentsAgentsDir,
+  } = resolveTargetDirectories(options);
+  const skillTargets = [claudeSkillsDir, agentsSkillsDir].filter(Boolean);
+  const agentTargets = [claudeAgentsDir, agentsAgentsDir].filter(Boolean);
+
+  for (const targetDir of skillTargets) {
     fs.mkdirSync(targetDir, { recursive: true });
 
-    for (const prompt of promptMetadata) {
+    for (const prompt of skillPrompts) {
       const skillDir = path.join(targetDir, slugifySkillDirectoryName(getGeneratedSkillName(prompt)));
       fs.mkdirSync(skillDir, { recursive: true });
       fs.writeFileSync(path.join(skillDir, "SKILL.md"), buildSkillEntryContent(prompt), "utf8");
     }
   }
 
+  for (const targetDir of agentTargets) {
+    fs.mkdirSync(targetDir, { recursive: true });
+
+    for (const prompt of agentPrompts) {
+      const agentFile = path.join(targetDir, `${slugifySkillDirectoryName(getGeneratedSkillName(prompt))}.md`);
+      fs.writeFileSync(agentFile, buildAgentEntryContent(prompt), "utf8");
+    }
+  }
+
   return {
     prompts: promptMetadata,
-    targets,
-    generatedCount: promptMetadata.length * targets.length,
+    skills: skillPrompts,
+    agents: agentPrompts,
+    skillTargets,
+    agentTargets,
+    targets: [...skillTargets, ...agentTargets],
+    generatedCount: skillPrompts.length * skillTargets.length + agentPrompts.length * agentTargets.length,
   };
 }
 
 module.exports = {
+  buildAgentEntryContent,
   buildSkillEntryContent,
   getGeneratedSkillName,
   registerPrompts,

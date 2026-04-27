@@ -476,12 +476,12 @@ async function main(argv) {
     try {
       if (parsed.targetPath) {
         const result = registerKitFolder(parsed.targetPath, { local: parsed.local, includeGlobal: parsed.includeGlobal });
-        process.stdout.write(`Registered resources from ${result.absoluteKitPath} into ${result.registryManifestPath} and generated ${result.registration.prompts.length} skills in ${result.registration.targets.length} skill roots\n`);
+        process.stdout.write(`Registered resources from ${result.absoluteKitPath} into ${result.registryManifestPath} and generated ${result.registration.prompts.length} prompts in ${result.registration.skillTargets.length} skill roots and ${result.registration.agentTargets.length} agent roots\n`);
         return 0;
       }
 
       const result = registerPrompts({ local: parsed.local, includeGlobal: parsed.includeGlobal });
-      process.stdout.write(`Registered ${result.prompts.length} prompts into ${result.targets.length} skill roots\n`);
+      process.stdout.write(`Registered ${result.prompts.length} prompts into ${result.skillTargets.length} skill roots and ${result.agentTargets.length} agent roots\n`);
       return 0;
     } catch (error) {
       process.stderr.write(`${error.message}\n`);
