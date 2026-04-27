@@ -20,6 +20,7 @@ const {
   getGlobalResourcesManifestPath,
 } = require("./resources");
 const { registerPrompts } = require("./register");
+const { installKit } = require("./install");
 
 function resolveKitRoot(targetPath, options = {}) {
   const cwd = options.cwd || process.cwd();
@@ -45,6 +46,14 @@ function registerKitFolder(targetPath, options = {}) {
   if (!promptPatterns.length && !scriptPatterns.length && !apiPatterns.length) {
     throw new Error(`Kit resources.toml has no prompt_files, script_files, or api_files: ${manifestPath}`);
   }
+
+  const installer = options.installer || installKit;
+  const installResult = installer(absoluteKitPath, {
+    noInstall: Boolean(options.noInstall),
+    reinstall: Boolean(options.reinstall),
+    runner: options.installRunner,
+    env: options.env,
+  });
 
   const registryManifestPath = options.local
     ? getLocalPromptsManifestPath({ cwd: options.cwd })
@@ -77,6 +86,7 @@ function registerKitFolder(targetPath, options = {}) {
     apiPatterns,
     registryManifestPath,
     registration,
+    install: installResult,
   };
 }
 

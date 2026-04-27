@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const path = require("node:path");
 const { ensureResourcesManifest, getLocalResourcesManifestPath } = require("../src/resources");
 const {
   ensureGlobalPromptRegistry,
@@ -15,6 +16,7 @@ const { ensureGlobalScriptRegistry, getScriptHelp, listActiveScriptMetadata, run
 const { collectPromptText, delegatePrompt } = require("../src/delegates");
 const { registerKitFolder } = require("../src/kits");
 const { registerPrompts } = require("../src/register");
+const { installKit } = require("../src/install");
 const { runWebServer } = require("../src/web-server");
 const { callApi, getApiHelp, listActiveApiMetadata, getApiDefinition } = require("../src/apis");
 
@@ -32,7 +34,8 @@ function printUsage() {
   process.stderr.write("   or: fabric api call <service> [-X METHOD] <path> [-H 'Name: Value']... [-d BODY | --json JSON]\n");
   process.stderr.write("   or: fabric api list [--verbose]\n");
   process.stderr.write("   or: fabric api help <service>\n");
-  process.stderr.write("   or: fabric register [path] [--local] [--include-global]\n");
+  process.stderr.write("   or: fabric register [path] [--local] [--include-global] [--no-install | --reinstall]\n");
+  process.stderr.write("   or: fabric kit install <path> [--no-install | --reinstall]\n");
   process.stderr.write("   or: fabric init\n");
   process.stderr.write("   or: fabric web run [--port <port>]\n");
 }
@@ -85,45 +88,81 @@ function formatVerboseList(entries, formatter) {
 }
 
 function parseRegisterArguments(args) {
-  if (args.length > 3) {
-    return null;
-  }
-
   let targetPath;
   let local = false;
   let includeGlobal = false;
+  let noInstall = false;
+  let reinstall = false;
 
   for (const arg of args) {
     if (arg === "--local") {
-      if (local) {
-        return null;
-      }
-
+      if (local) return null;
       local = true;
       continue;
     }
-
     if (arg === "--include-global") {
-      if (includeGlobal) {
-        return null;
-      }
-
+      if (includeGlobal) return null;
       includeGlobal = true;
       continue;
     }
-
-    if (targetPath !== undefined) {
-      return null;
+    if (arg === "--no-install") {
+      if (noInstall) return null;
+      noInstall = true;
+      continue;
     }
-
+    if (arg === "--reinstall") {
+      if (reinstall) return null;
+      reinstall = true;
+      continue;
+    }
+    if (arg.startsWith("--")) return null;
+    if (targetPath !== undefined) return null;
     targetPath = arg;
   }
+
+  if (noInstall && reinstall) return null;
 
   return {
     targetPath,
     local,
     includeGlobal,
+    noInstall,
+    reinstall,
   };
+}
+
+function parseKitInstallArguments(args) {
+  let targetPath;
+  let noInstall = false;
+  let reinstall = false;
+  for (const arg of args) {
+    if (arg === "--no-install") {
+      if (noInstall) return null;
+      noInstall = true;
+      continue;
+    }
+    if (arg === "--reinstall") {
+      if (reinstall) return null;
+      reinstall = true;
+      continue;
+    }
+    if (arg.startsWith("--")) return null;
+    if (targetPath !== undefined) return null;
+    targetPath = arg;
+  }
+  if (!targetPath) return null;
+  if (noInstall && reinstall) return null;
+  return { targetPath, noInstall, reinstall };
+}
+
+function formatInstallSummary(install) {
+  if (!install) return null;
+  if (install.action === "skip" && install.reason === "no-deps") return null;
+  const parts = [`Dependencies: ${install.action} (${install.reason})`];
+  if (install.strategy) parts.push(`strategy=${install.strategy}`);
+  if (install.packageManager) parts.push(`packageManager=${install.packageManager}`);
+  if (install.command) parts.push(`ran=${install.command} ${(install.args || []).join(" ").trim()}`);
+  return parts.join(" ");
 }
 
 function parseApiCallArguments(rest) {
@@ -475,13 +514,43 @@ async function main(argv) {
 
     try {
       if (parsed.targetPath) {
-        const result = registerKitFolder(parsed.targetPath, { local: parsed.local, includeGlobal: parsed.includeGlobal });
+        const result = registerKitFolder(parsed.targetPath, {
+          local: parsed.local,
+          includeGlobal: parsed.includeGlobal,
+          noInstall: parsed.noInstall,
+          reinstall: parsed.reinstall,
+        });
         process.stdout.write(`Registered resources from ${result.absoluteKitPath} into ${result.registryManifestPath} and generated ${result.registration.prompts.length} prompts in ${result.registration.skillTargets.length} skill roots and ${result.registration.agentTargets.length} agent roots\n`);
+        const summary = formatInstallSummary(result.install);
+        if (summary) process.stdout.write(`${summary}\n`);
         return 0;
       }
 
       const result = registerPrompts({ local: parsed.local, includeGlobal: parsed.includeGlobal });
       process.stdout.write(`Registered ${result.prompts.length} prompts into ${result.skillTargets.length} skill roots and ${result.agentTargets.length} agent roots\n`);
+      return 0;
+    } catch (error) {
+      process.stderr.write(`${error.message}\n`);
+      return 1;
+    }
+  }
+
+  if (group === "kit" && action === "install") {
+    const parsed = parseKitInstallArguments(rest);
+    if (!parsed) {
+      process.stderr.write("Usage: fabric kit install <path> [--no-install | --reinstall]\n");
+      return 1;
+    }
+    try {
+      const absolutePath = path.isAbsolute(parsed.targetPath)
+        ? parsed.targetPath
+        : path.join(process.cwd(), parsed.targetPath);
+      const result = installKit(absolutePath, {
+        noInstall: parsed.noInstall,
+        reinstall: parsed.reinstall,
+      });
+      const summary = formatInstallSummary(result) || `Dependencies: ${result.action} (${result.reason})`;
+      process.stdout.write(`${summary}\n`);
       return 0;
     } catch (error) {
       process.stderr.write(`${error.message}\n`);

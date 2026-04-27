@@ -22,6 +22,44 @@ function parseArrayField(parsed, key, label) {
   return parsed[key].map((entry) => String(entry));
 }
 
+const ALLOWED_DEPENDENCY_STRATEGIES = ["none", "package-json", "vendored"];
+const ALLOWED_DEPENDENCY_PACKAGE_MANAGERS = ["auto", "npm", "pnpm", "yarn", "bun"];
+
+function parseDependenciesTable(parsed) {
+  if (!Object.prototype.hasOwnProperty.call(parsed, "dependencies")) {
+    return null;
+  }
+  const table = parsed.dependencies;
+  if (!table || typeof table !== "object" || Array.isArray(table)) {
+    throw new Error("Invalid resources manifest: [dependencies] must be a table");
+  }
+  if (!Object.prototype.hasOwnProperty.call(table, "strategy")) {
+    throw new Error("Invalid resources manifest: dependencies.strategy is required");
+  }
+  if (typeof table.strategy !== "string" || !ALLOWED_DEPENDENCY_STRATEGIES.includes(table.strategy)) {
+    throw new Error(`Invalid resources manifest: dependencies.strategy must be one of ${ALLOWED_DEPENDENCY_STRATEGIES.join(", ")} (got ${JSON.stringify(table.strategy)})`);
+  }
+  let packageManager = "auto";
+  if (Object.prototype.hasOwnProperty.call(table, "package_manager")) {
+    if (typeof table.package_manager !== "string" || !ALLOWED_DEPENDENCY_PACKAGE_MANAGERS.includes(table.package_manager)) {
+      throw new Error(`Invalid resources manifest: dependencies.package_manager must be one of ${ALLOWED_DEPENDENCY_PACKAGE_MANAGERS.join(", ")} (got ${JSON.stringify(table.package_manager)})`);
+    }
+    packageManager = table.package_manager;
+  }
+  let ignoreScripts = false;
+  if (Object.prototype.hasOwnProperty.call(table, "ignore_scripts")) {
+    if (typeof table.ignore_scripts !== "boolean") {
+      throw new Error(`Invalid resources manifest: dependencies.ignore_scripts must be a boolean (got ${JSON.stringify(table.ignore_scripts)})`);
+    }
+    ignoreScripts = table.ignore_scripts;
+  }
+  return {
+    strategy: table.strategy,
+    packageManager,
+    ignoreScripts,
+  };
+}
+
 function parseResourcesManifest(content) {
   const parsed = TOML.parse(content);
 
@@ -29,6 +67,7 @@ function parseResourcesManifest(content) {
     promptFiles: parseArrayField(parsed, "prompt_files", "prompt_files"),
     scriptFiles: parseArrayField(parsed, "script_files", "script_files"),
     apiFiles: parseArrayField(parsed, "api_files", "api_files"),
+    dependencies: parseDependenciesTable(parsed),
   };
 }
 

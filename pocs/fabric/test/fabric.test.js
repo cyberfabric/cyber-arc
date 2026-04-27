@@ -5,6 +5,15 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const { loadPromptsFromManifest } = require("../src/prompts");
+const { parseResourcesManifest } = require("../src/resources");
+const {
+  detectPackageManager,
+  buildInstallCommand,
+  computeInstallDecision,
+  resolveKitDependencies,
+  installKit,
+} = require("../src/install");
+const { registerKitFolder } = require("../src/kits");
 
 const cliPath = path.join(__dirname, "..", "bin", "fabric");
 const mockClaudePath = path.join(__dirname, "fixtures", "mock-claude.js");
@@ -1597,4 +1606,745 @@ test("fabric SDK api.call returns ok:false on non-2xx without throwing", async (
     await mock.close();
     fs.rmSync(tempHome, { recursive: true, force: true });
   }
+});
+
+test("parseResourcesManifest returns dependencies: null when no [dependencies] table is present", () => {
+  const content = `schema_version = 1\nprompt_files = []\nscript_files = []\n`;
+  const parsed = parseResourcesManifest(content);
+  assert.equal(parsed.dependencies, null);
+});
+
+test("parseResourcesManifest returns dependencies with all provided fields when present", () => {
+  const content = [
+    `schema_version = 1`,
+    `prompt_files = []`,
+    `script_files = []`,
+    ``,
+    `[dependencies]`,
+    `strategy = "package-json"`,
+    `package_manager = "pnpm"`,
+    `ignore_scripts = true`,
+  ].join("\n");
+  const parsed = parseResourcesManifest(content);
+  assert.deepEqual(parsed.dependencies, {
+    strategy: "package-json",
+    packageManager: "pnpm",
+    ignoreScripts: true,
+  });
+});
+
+test("parseResourcesManifest fills dependency defaults: package_manager=auto, ignore_scripts=false, strategy required", () => {
+  const content = [
+    `schema_version = 1`,
+    `prompt_files = []`,
+    `script_files = []`,
+    ``,
+    `[dependencies]`,
+    `strategy = "vendored"`,
+  ].join("\n");
+  const parsed = parseResourcesManifest(content);
+  assert.deepEqual(parsed.dependencies, {
+    strategy: "vendored",
+    packageManager: "auto",
+    ignoreScripts: false,
+  });
+});
+
+test("parseResourcesManifest throws when dependencies.strategy is missing", () => {
+  const content = [
+    `schema_version = 1`,
+    `prompt_files = []`,
+    `script_files = []`,
+    ``,
+    `[dependencies]`,
+    `package_manager = "npm"`,
+  ].join("\n");
+  assert.throws(() => parseResourcesManifest(content), /dependencies\.strategy/);
+});
+
+test("parseResourcesManifest throws on invalid dependencies.strategy", () => {
+  const content = [
+    `schema_version = 1`,
+    `prompt_files = []`,
+    `script_files = []`,
+    ``,
+    `[dependencies]`,
+    `strategy = "magic"`,
+  ].join("\n");
+  assert.throws(() => parseResourcesManifest(content), /dependencies\.strategy.*none.*package-json.*vendored/s);
+});
+
+test("parseResourcesManifest throws on invalid dependencies.package_manager", () => {
+  const content = [
+    `schema_version = 1`,
+    `prompt_files = []`,
+    `script_files = []`,
+    ``,
+    `[dependencies]`,
+    `strategy = "package-json"`,
+    `package_manager = "cargo"`,
+  ].join("\n");
+  assert.throws(() => parseResourcesManifest(content), /dependencies\.package_manager.*auto.*npm.*pnpm.*yarn.*bun/s);
+});
+
+function makeKitDir(label) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `fabric-kit-${label}-`));
+  return dir;
+}
+
+test("detectPackageManager returns npm when no lockfile is present", () => {
+  const kitDir = makeKitDir("detect-default");
+  try {
+    assert.equal(detectPackageManager(kitDir), "npm");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("detectPackageManager returns npm when only package-lock.json is present", () => {
+  const kitDir = makeKitDir("detect-npm");
+  try {
+    fs.writeFileSync(path.join(kitDir, "package-lock.json"), "{}", "utf8");
+    assert.equal(detectPackageManager(kitDir), "npm");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("detectPackageManager returns pnpm when pnpm-lock.yaml is present", () => {
+  const kitDir = makeKitDir("detect-pnpm");
+  try {
+    fs.writeFileSync(path.join(kitDir, "pnpm-lock.yaml"), "lockfileVersion: '6.0'\n", "utf8");
+    assert.equal(detectPackageManager(kitDir), "pnpm");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("detectPackageManager returns yarn when yarn.lock is present", () => {
+  const kitDir = makeKitDir("detect-yarn");
+  try {
+    fs.writeFileSync(path.join(kitDir, "yarn.lock"), "# yarn lockfile v1\n", "utf8");
+    assert.equal(detectPackageManager(kitDir), "yarn");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("detectPackageManager returns bun when bun.lock is present", () => {
+  const kitDir = makeKitDir("detect-bun");
+  try {
+    fs.writeFileSync(path.join(kitDir, "bun.lock"), "{}", "utf8");
+    assert.equal(detectPackageManager(kitDir), "bun");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("detectPackageManager returns bun when bun.lockb is present", () => {
+  const kitDir = makeKitDir("detect-bunb");
+  try {
+    fs.writeFileSync(path.join(kitDir, "bun.lockb"), "binary", "utf8");
+    assert.equal(detectPackageManager(kitDir), "bun");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("detectPackageManager prefers pnpm over npm when both lockfiles exist", () => {
+  const kitDir = makeKitDir("detect-pnpm-vs-npm");
+  try {
+    fs.writeFileSync(path.join(kitDir, "package-lock.json"), "{}", "utf8");
+    fs.writeFileSync(path.join(kitDir, "pnpm-lock.yaml"), "lockfileVersion: '6.0'\n", "utf8");
+    assert.equal(detectPackageManager(kitDir), "pnpm");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("buildInstallCommand: npm + lockfile uses ci without --ignore-scripts by default", () => {
+  assert.deepEqual(buildInstallCommand({ packageManager: "npm", hasLockfile: true, ignoreScripts: false }), {
+    command: "npm",
+    args: ["ci"],
+  });
+});
+
+test("buildInstallCommand: npm + no lockfile falls back to install", () => {
+  assert.deepEqual(buildInstallCommand({ packageManager: "npm", hasLockfile: false, ignoreScripts: false }), {
+    command: "npm",
+    args: ["install"],
+  });
+});
+
+test("buildInstallCommand: npm appends --ignore-scripts when configured", () => {
+  assert.deepEqual(buildInstallCommand({ packageManager: "npm", hasLockfile: true, ignoreScripts: true }), {
+    command: "npm",
+    args: ["ci", "--ignore-scripts"],
+  });
+});
+
+test("buildInstallCommand: pnpm + lockfile uses --frozen-lockfile", () => {
+  assert.deepEqual(buildInstallCommand({ packageManager: "pnpm", hasLockfile: true, ignoreScripts: false }), {
+    command: "pnpm",
+    args: ["install", "--frozen-lockfile"],
+  });
+});
+
+test("buildInstallCommand: pnpm + no lockfile + ignore-scripts", () => {
+  assert.deepEqual(buildInstallCommand({ packageManager: "pnpm", hasLockfile: false, ignoreScripts: true }), {
+    command: "pnpm",
+    args: ["install", "--ignore-scripts"],
+  });
+});
+
+test("buildInstallCommand: yarn + lockfile uses --frozen-lockfile", () => {
+  assert.deepEqual(buildInstallCommand({ packageManager: "yarn", hasLockfile: true, ignoreScripts: false }), {
+    command: "yarn",
+    args: ["install", "--frozen-lockfile"],
+  });
+});
+
+test("buildInstallCommand: bun + lockfile uses --frozen-lockfile", () => {
+  assert.deepEqual(buildInstallCommand({ packageManager: "bun", hasLockfile: true, ignoreScripts: false }), {
+    command: "bun",
+    args: ["install", "--frozen-lockfile"],
+  });
+});
+
+test("buildInstallCommand throws on unknown package manager", () => {
+  assert.throws(() => buildInstallCommand({ packageManager: "cargo", hasLockfile: true, ignoreScripts: false }), /buildInstallCommand.*cargo/);
+});
+
+const SAMPLE_STATE = {
+  packageJsonHash: "pkg-1",
+  lockfileHash: "lock-1",
+  packageManager: "npm",
+  nodeVersion: "v22.0.0",
+};
+
+function makeDecisionInputs(overrides = {}) {
+  return {
+    strategy: "package-json",
+    hasNodeModules: true,
+    currentState: { ...SAMPLE_STATE },
+    expectedState: { ...SAMPLE_STATE },
+    flags: { noInstall: false, reinstall: false },
+    ...overrides,
+  };
+}
+
+test("computeInstallDecision skips when strategy is none", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({ strategy: "none" }));
+  assert.equal(decision.action, "skip");
+  assert.match(decision.reason, /no-deps/);
+});
+
+test("computeInstallDecision verifies when strategy is vendored and node_modules exists", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({ strategy: "vendored", currentState: null }));
+  assert.equal(decision.action, "verify");
+  assert.match(decision.reason, /vendored/);
+});
+
+test("computeInstallDecision fails when strategy is vendored but node_modules is missing", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({ strategy: "vendored", hasNodeModules: false, currentState: null }));
+  assert.equal(decision.action, "fail");
+  assert.match(decision.reason, /vendored.*node_modules/);
+});
+
+test("computeInstallDecision installs when package-json kit has no node_modules", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({ hasNodeModules: false, currentState: null }));
+  assert.equal(decision.action, "install");
+  assert.match(decision.reason, /no-node-modules/);
+});
+
+test("computeInstallDecision installs when no state file recorded", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({ currentState: null }));
+  assert.equal(decision.action, "install");
+  assert.match(decision.reason, /no-state/);
+});
+
+test("computeInstallDecision skips when state matches expected hashes and node version", () => {
+  const decision = computeInstallDecision(makeDecisionInputs());
+  assert.equal(decision.action, "skip");
+  assert.match(decision.reason, /state-match/);
+});
+
+test("computeInstallDecision installs when lockfile hash differs", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({
+    expectedState: { ...SAMPLE_STATE, lockfileHash: "lock-2" },
+  }));
+  assert.equal(decision.action, "install");
+  assert.match(decision.reason, /lockfile/);
+});
+
+test("computeInstallDecision installs when package.json hash differs", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({
+    expectedState: { ...SAMPLE_STATE, packageJsonHash: "pkg-2" },
+  }));
+  assert.equal(decision.action, "install");
+  assert.match(decision.reason, /package\.json/);
+});
+
+test("computeInstallDecision installs when node version differs", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({
+    expectedState: { ...SAMPLE_STATE, nodeVersion: "v24.0.0" },
+  }));
+  assert.equal(decision.action, "install");
+  assert.match(decision.reason, /node-version/);
+});
+
+test("computeInstallDecision installs when reinstall flag is set even if state matches", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({ flags: { noInstall: false, reinstall: true } }));
+  assert.equal(decision.action, "install");
+  assert.match(decision.reason, /reinstall-flag/);
+});
+
+test("computeInstallDecision verifies under --no-install when node_modules exists", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({
+    flags: { noInstall: true, reinstall: false },
+    currentState: null,
+  }));
+  assert.equal(decision.action, "verify");
+  assert.match(decision.reason, /no-install/);
+});
+
+test("computeInstallDecision fails under --no-install when node_modules is missing", () => {
+  const decision = computeInstallDecision(makeDecisionInputs({
+    flags: { noInstall: true, reinstall: false },
+    hasNodeModules: false,
+    currentState: null,
+  }));
+  assert.equal(decision.action, "fail");
+  assert.match(decision.reason, /no-install.*node_modules/);
+});
+
+function writeKitManifest(kitDir, body = "schema_version = 1\nprompt_files = []\nscript_files = []\n") {
+  fs.writeFileSync(path.join(kitDir, "resources.toml"), body, "utf8");
+}
+
+test("resolveKitDependencies throws when kit has no resources.toml", () => {
+  const kitDir = makeKitDir("resolve-no-manifest");
+  try {
+    assert.throws(() => resolveKitDependencies(kitDir), /resources\.toml/);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("resolveKitDependencies returns strategy=none when no [dependencies] table and no package.json", () => {
+  const kitDir = makeKitDir("resolve-implicit-none");
+  try {
+    writeKitManifest(kitDir);
+    const deps = resolveKitDependencies(kitDir);
+    assert.equal(deps.strategy, "none");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("resolveKitDependencies returns implicit package-json strategy when package.json exists", () => {
+  const kitDir = makeKitDir("resolve-implicit-pkg");
+  try {
+    writeKitManifest(kitDir);
+    fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
+    const deps = resolveKitDependencies(kitDir);
+    assert.deepEqual(deps, { strategy: "package-json", packageManager: "npm", ignoreScripts: false });
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("resolveKitDependencies resolves package_manager=auto via lockfile detection", () => {
+  const kitDir = makeKitDir("resolve-auto-detect");
+  try {
+    writeKitManifest(kitDir, [
+      `schema_version = 1`,
+      `prompt_files = []`,
+      `script_files = []`,
+      ``,
+      `[dependencies]`,
+      `strategy = "package-json"`,
+      `package_manager = "auto"`,
+    ].join("\n"));
+    fs.writeFileSync(path.join(kitDir, "pnpm-lock.yaml"), "lockfileVersion: '6.0'\n", "utf8");
+    const deps = resolveKitDependencies(kitDir);
+    assert.equal(deps.packageManager, "pnpm");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("resolveKitDependencies honors explicit package_manager", () => {
+  const kitDir = makeKitDir("resolve-explicit-pm");
+  try {
+    writeKitManifest(kitDir, [
+      `schema_version = 1`,
+      `prompt_files = []`,
+      `script_files = []`,
+      ``,
+      `[dependencies]`,
+      `strategy = "package-json"`,
+      `package_manager = "yarn"`,
+    ].join("\n"));
+    fs.writeFileSync(path.join(kitDir, "pnpm-lock.yaml"), "lockfileVersion: '6.0'\n", "utf8");
+    const deps = resolveKitDependencies(kitDir);
+    assert.equal(deps.packageManager, "yarn");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+function makeFakeRunner(impl) {
+  const calls = [];
+  function runner(opts) {
+    calls.push(opts);
+    return impl ? impl(opts) : { status: 0, stdout: "", stderr: "" };
+  }
+  return { runner, calls };
+}
+
+test("installKit returns skip without invoking runner when strategy is none", () => {
+  const kitDir = makeKitDir("kit-install-none");
+  try {
+    writeKitManifest(kitDir);
+    const fake = makeFakeRunner();
+    const result = installKit(kitDir, { runner: fake.runner });
+    assert.equal(result.action, "skip");
+    assert.equal(result.strategy, "none");
+    assert.equal(fake.calls.length, 0);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("installKit runs install with detected package manager and writes state file", () => {
+  const kitDir = makeKitDir("kit-install-run");
+  try {
+    writeKitManifest(kitDir);
+    fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
+    fs.writeFileSync(path.join(kitDir, "package-lock.json"), '{"name":"k","lockfileVersion":3}', "utf8");
+    const fake = makeFakeRunner(({ cwd }) => {
+      // simulate install creating node_modules
+      fs.mkdirSync(path.join(cwd, "node_modules"), { recursive: true });
+      fs.writeFileSync(path.join(cwd, "node_modules", ".keep"), "", "utf8");
+      return { status: 0, stdout: "", stderr: "" };
+    });
+    const result = installKit(kitDir, { runner: fake.runner });
+    assert.equal(result.action, "install");
+    assert.equal(result.packageManager, "npm");
+    assert.equal(fake.calls.length, 1);
+    assert.equal(fake.calls[0].command, "npm");
+    assert.deepEqual(fake.calls[0].args, ["ci"]);
+    assert.equal(fake.calls[0].cwd, kitDir);
+    const stateFilePath = path.join(kitDir, "node_modules", ".fabric-install-state.json");
+    assert.equal(fs.existsSync(stateFilePath), true);
+    const state = JSON.parse(fs.readFileSync(stateFilePath, "utf8"));
+    assert.equal(state.packageManager, "npm");
+    assert.equal(state.nodeVersion, process.version);
+    assert.equal(typeof state.lockfileHash, "string");
+    assert.equal(typeof state.packageJsonHash, "string");
+    assert.equal(typeof state.installedAt, "string");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("installKit skips when state file matches current package.json + lockfile + node version", () => {
+  const kitDir = makeKitDir("kit-install-cache-hit");
+  try {
+    writeKitManifest(kitDir);
+    fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
+    fs.writeFileSync(path.join(kitDir, "package-lock.json"), '{"name":"k","lockfileVersion":3}', "utf8");
+    const fake = makeFakeRunner(({ cwd }) => {
+      fs.mkdirSync(path.join(cwd, "node_modules"), { recursive: true });
+      fs.writeFileSync(path.join(cwd, "node_modules", ".keep"), "", "utf8");
+      return { status: 0, stdout: "", stderr: "" };
+    });
+    installKit(kitDir, { runner: fake.runner });
+    assert.equal(fake.calls.length, 1);
+    const second = installKit(kitDir, { runner: fake.runner });
+    assert.equal(second.action, "skip");
+    assert.match(second.reason, /state-match/);
+    assert.equal(fake.calls.length, 1);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("installKit reinstalls when --reinstall is set even if state matches", () => {
+  const kitDir = makeKitDir("kit-install-reinstall");
+  try {
+    writeKitManifest(kitDir);
+    fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
+    const fake = makeFakeRunner(({ cwd }) => {
+      fs.mkdirSync(path.join(cwd, "node_modules"), { recursive: true });
+      fs.writeFileSync(path.join(cwd, "node_modules", ".keep"), "", "utf8");
+      return { status: 0, stdout: "", stderr: "" };
+    });
+    installKit(kitDir, { runner: fake.runner });
+    const second = installKit(kitDir, { runner: fake.runner, reinstall: true });
+    assert.equal(second.action, "install");
+    assert.match(second.reason, /reinstall-flag/);
+    assert.equal(fake.calls.length, 2);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("installKit with --no-install and missing node_modules throws an actionable error", () => {
+  const kitDir = makeKitDir("kit-install-no-install-missing");
+  try {
+    writeKitManifest(kitDir);
+    fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
+    const fake = makeFakeRunner();
+    assert.throws(
+      () => installKit(kitDir, { runner: fake.runner, noInstall: true }),
+      (error) => /no-install/.test(error.message) && /node_modules/.test(error.message),
+    );
+    assert.equal(fake.calls.length, 0);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("installKit propagates runner failure with kit path and stderr in the error", () => {
+  const kitDir = makeKitDir("kit-install-runner-fail");
+  try {
+    writeKitManifest(kitDir);
+    fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
+    const fake = makeFakeRunner(() => ({ status: 1, stdout: "", stderr: "ENETUNREACH registry.npmjs.org" }));
+    assert.throws(
+      () => installKit(kitDir, { runner: fake.runner }),
+      (error) => error.message.includes(kitDir) && error.message.includes("ENETUNREACH"),
+    );
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("installKit verifies vendored kit when node_modules exists", () => {
+  const kitDir = makeKitDir("kit-install-vendored-ok");
+  try {
+    writeKitManifest(kitDir, [
+      `schema_version = 1`,
+      `prompt_files = []`,
+      `script_files = []`,
+      ``,
+      `[dependencies]`,
+      `strategy = "vendored"`,
+    ].join("\n"));
+    fs.mkdirSync(path.join(kitDir, "node_modules"), { recursive: true });
+    fs.writeFileSync(path.join(kitDir, "node_modules", ".keep"), "", "utf8");
+    const fake = makeFakeRunner();
+    const result = installKit(kitDir, { runner: fake.runner });
+    assert.equal(result.action, "verify");
+    assert.equal(result.strategy, "vendored");
+    assert.equal(fake.calls.length, 0);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("installKit throws when vendored kit has no node_modules", () => {
+  const kitDir = makeKitDir("kit-install-vendored-fail");
+  try {
+    writeKitManifest(kitDir, [
+      `schema_version = 1`,
+      `prompt_files = []`,
+      `script_files = []`,
+      ``,
+      `[dependencies]`,
+      `strategy = "vendored"`,
+    ].join("\n"));
+    const fake = makeFakeRunner();
+    assert.throws(
+      () => installKit(kitDir, { runner: fake.runner }),
+      (error) => /vendored/.test(error.message) && /node_modules/.test(error.message),
+    );
+    assert.equal(fake.calls.length, 0);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+function makeRegisterKitFixture(label) {
+  const kitDir = makeKitDir(`register-${label}`);
+  const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), `fabric-register-home-${label}-`));
+  fs.mkdirSync(path.join(kitDir, "prompts"), { recursive: true });
+  fs.writeFileSync(
+    path.join(kitDir, "prompts", "demo.md"),
+    "---\nid: demo\ntype: skill\nname: demo\ndescription: demo skill\n---\n\n<!-- append \"body\" -->\nDemo body.\n<!-- /append -->\n",
+    "utf8",
+  );
+  fs.writeFileSync(
+    path.join(kitDir, "resources.toml"),
+    `schema_version = 1\nprompt_files = ["prompts/*.md"]\nscript_files = []\n`,
+    "utf8",
+  );
+  return { kitDir, tempHome };
+}
+
+test("registerKitFolder invokes installer with kit path and forwards install flags", () => {
+  const { kitDir, tempHome } = makeRegisterKitFixture("install-call");
+  try {
+    const installerCalls = [];
+    const fakeInstaller = (calledKitPath, options) => {
+      installerCalls.push({ calledKitPath, options });
+      return { action: "skip", reason: "no-deps", strategy: "none" };
+    };
+    const result = registerKitFolder(kitDir, {
+      homeDir: tempHome,
+      installer: fakeInstaller,
+      noInstall: true,
+      reinstall: false,
+    });
+    assert.equal(installerCalls.length, 1);
+    assert.equal(installerCalls[0].calledKitPath, kitDir);
+    assert.equal(installerCalls[0].options.noInstall, true);
+    assert.equal(installerCalls[0].options.reinstall, false);
+    assert.deepEqual(result.install, { action: "skip", reason: "no-deps", strategy: "none" });
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("registerKitFolder aborts before manifest writes when installer throws", () => {
+  const { kitDir, tempHome } = makeRegisterKitFixture("install-fail");
+  const globalManifestPath = path.join(tempHome, ".fabric", "resources.toml");
+  try {
+    const fakeInstaller = () => {
+      throw new Error("installer failed: simulated network error");
+    };
+    assert.throws(
+      () => registerKitFolder(kitDir, { homeDir: tempHome, installer: fakeInstaller }),
+      /installer failed/,
+    );
+    assert.equal(fs.existsSync(globalManifestPath), false);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("registerKitFolder defaults to installKit and reports install metadata in result", () => {
+  const { kitDir, tempHome } = makeRegisterKitFixture("install-default");
+  try {
+    const result = registerKitFolder(kitDir, { homeDir: tempHome });
+    assert.equal(result.install.action, "skip");
+    assert.equal(result.install.strategy, "none");
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric register <path> --local --no-install succeeds for a kit with no dependencies", () => {
+  const { kitDir, tempHome } = makeRegisterKitFixture("cli-no-install-none");
+  try {
+    const result = spawnSync(process.execPath, [cliPath, "register", kitDir, "--local", "--no-install"], {
+      cwd: tempHome,
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    assert.match(result.stdout, /Registered resources from/);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric register <path> --local --no-install fails when kit has package.json but no node_modules", () => {
+  const { kitDir, tempHome } = makeRegisterKitFixture("cli-no-install-missing");
+  try {
+    fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
+    const result = spawnSync(process.execPath, [cliPath, "register", kitDir, "--local", "--no-install"], {
+      cwd: tempHome,
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /no-install/);
+    assert.match(result.stderr, /node_modules/);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric kit install <path> runs the install path for a strategy=none kit and reports skip", () => {
+  const { kitDir, tempHome } = makeRegisterKitFixture("cli-kit-install-skip");
+  try {
+    const result = spawnSync(process.execPath, [cliPath, "kit", "install", kitDir], {
+      cwd: tempHome,
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    assert.match(result.stdout, /Dependencies/i);
+    assert.match(result.stdout, /skip/);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("fabric kit install <path> verifies a vendored kit and reports verify", () => {
+  const { kitDir, tempHome } = makeRegisterKitFixture("cli-kit-install-vendored");
+  try {
+    fs.writeFileSync(path.join(kitDir, "resources.toml"), [
+      `schema_version = 1`,
+      `prompt_files = ["prompts/*.md"]`,
+      `script_files = []`,
+      ``,
+      `[dependencies]`,
+      `strategy = "vendored"`,
+    ].join("\n"), "utf8");
+    fs.mkdirSync(path.join(kitDir, "node_modules"), { recursive: true });
+    fs.writeFileSync(path.join(kitDir, "node_modules", ".keep"), "", "utf8");
+    const result = spawnSync(process.execPath, [cliPath, "kit", "install", kitDir], {
+      cwd: tempHome,
+      encoding: "utf8",
+      env: buildCliEnv(tempHome),
+    });
+    assert.equal(result.status, 0, `stderr: ${result.stderr}`);
+    assert.match(result.stdout, /verify/);
+    assert.match(result.stdout, /vendored/);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+    fs.rmSync(tempHome, { recursive: true, force: true });
+  }
+});
+
+test("resolveKitDependencies returns vendored strategy when configured", () => {
+  const kitDir = makeKitDir("resolve-vendored");
+  try {
+    writeKitManifest(kitDir, [
+      `schema_version = 1`,
+      `prompt_files = []`,
+      `script_files = []`,
+      ``,
+      `[dependencies]`,
+      `strategy = "vendored"`,
+    ].join("\n"));
+    const deps = resolveKitDependencies(kitDir);
+    assert.equal(deps.strategy, "vendored");
+    assert.equal(deps.ignoreScripts, false);
+  } finally {
+    fs.rmSync(kitDir, { recursive: true, force: true });
+  }
+});
+
+test("parseResourcesManifest throws when dependencies.ignore_scripts is not a boolean", () => {
+  const content = [
+    `schema_version = 1`,
+    `prompt_files = []`,
+    `script_files = []`,
+    ``,
+    `[dependencies]`,
+    `strategy = "package-json"`,
+    `ignore_scripts = "yes"`,
+  ].join("\n");
+  assert.throws(() => parseResourcesManifest(content), /dependencies\.ignore_scripts/);
 });
