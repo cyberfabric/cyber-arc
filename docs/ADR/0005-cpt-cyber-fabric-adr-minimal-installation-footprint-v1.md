@@ -4,7 +4,7 @@ date: 2026-04-20
 decision-makers: cyber fabric maintainers
 ---
 
-# ADR-0013: Install the System with a Minimal Project-Local Footprint
+# ADR-0005: Install the System with a Minimal Project-Local Footprint
 
 <!-- toc -->
 
@@ -117,6 +117,7 @@ This decision aligns with Cyber Fabric's goal of being lightweight enough for lo
 ## Traceability
 
 - **Vision**: [VISION.md](../../VISION.md)
+- **PRD references** ([PRD.md](../PRD.md)): `cpt-cyber-fabric-nfr-minimal-footprint`, `cpt-cyber-fabric-fr-workspace-named-multi-repo`
 - **Related decisions**: none yet
 
 This decision directly addresses the following traceability items:

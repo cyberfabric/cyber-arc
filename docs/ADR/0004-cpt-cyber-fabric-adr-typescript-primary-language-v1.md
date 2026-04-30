@@ -4,7 +4,7 @@ date: 2026-04-21
 decision-makers: cyber fabric maintainers
 ---
 
-# ADR-0016: Adopt TypeScript as the Primary Implementation Language for Cyber Fabric
+# ADR-0004: Adopt TypeScript as the Primary Implementation Language for Cyber Fabric
 
 <!-- toc -->
 
@@ -123,7 +123,8 @@ This keeps the system aligned with its interactive product direction while still
 ## Traceability
 
 - **Vision**: [VISION.md](../../VISION.md)
-- **Related decisions**: [ADR-0012](0012-cpt-cyber-fabric-adr-orchestrator-skill-pipeline-composer-v1.md), [ADR-0013](0013-cpt-cyber-fabric-adr-minimal-installation-footprint-v1.md), [ADR-0014](0014-cpt-cyber-fabric-adr-tool-generated-layered-prompts-v1.md), [ADR-0015](0015-cpt-cyber-fabric-adr-deterministic-tooling-in-skills-v1.md), [ADR-0017](0017-cpt-cyber-fabric-adr-unified-agent-first-tool-v1.md), [ADR-0018](0018-cpt-cyber-fabric-adr-host-native-plugins-and-adapters-v1.md), [ADR-0019](0019-cpt-cyber-fabric-adr-central-fabric-core-v1.md)
+- **PRD references** ([PRD.md](../PRD.md)): `cpt-cyber-fabric-fr-distribution-multi-channel`, `cpt-cyber-fabric-fr-distribution-channel-equivalence`
+- **Related decisions**: [ADR-0001](0001-cpt-cyber-fabric-adr-unified-agent-first-tool-v1.md), [ADR-0002](0002-cpt-cyber-fabric-adr-central-fabric-core-v1.md), [ADR-0003](0003-cpt-cyber-fabric-adr-host-native-plugins-and-adapters-v1.md), [ADR-0005](0005-cpt-cyber-fabric-adr-minimal-installation-footprint-v1.md), [ADR-0007](0007-cpt-cyber-fabric-adr-tool-generated-layered-prompts-v1.md)
 
 This decision directly addresses the following traceability items:
 

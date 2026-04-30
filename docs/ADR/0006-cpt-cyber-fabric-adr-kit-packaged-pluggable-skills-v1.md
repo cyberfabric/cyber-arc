@@ -4,7 +4,7 @@ date: 2026-04-20
 decision-makers: cyber fabric maintainers
 ---
 
-# ADR-0011: Distribute Skills as Kit Packages with a Central Agent Registration Tool
+# ADR-0006: Distribute Skills as Kit Packages with a Central Agent Registration Tool
 
 <!-- toc -->
 
@@ -116,6 +116,7 @@ This keeps the system pluggable while ensuring that the agent-facing surface rem
 ## Traceability
 
 - **Vision**: [VISION.md](../../VISION.md)
+- **PRD references** ([PRD.md](../PRD.md)): `cpt-cyber-fabric-fr-kits-only-extension-mechanism`, `cpt-cyber-fabric-fr-skills-cross-tool-registration`, `cpt-cyber-fabric-contract-agentic-tool-host-plugin`
 - **Related decisions**: none yet
 
 This decision directly addresses the following traceability items:

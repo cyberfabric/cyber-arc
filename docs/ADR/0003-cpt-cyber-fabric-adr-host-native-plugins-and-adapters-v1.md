@@ -4,7 +4,7 @@ date: 2026-04-21
 decision-makers: cyber fabric maintainers
 ---
 
-# ADR-0018: Integrate Cyber Fabric Through Host-Native Plugins and Adapters
+# ADR-0003: Integrate Cyber Fabric Through Host-Native Plugins and Adapters
 
 <!-- toc -->
 
@@ -121,7 +121,8 @@ This keeps Cyber Fabric host-native for users without turning every integration 
 ## Traceability
 
 - **Vision**: [VISION.md](../../VISION.md)
-- **Related decisions**: [ADR-0012](0012-cpt-cyber-fabric-adr-orchestrator-skill-pipeline-composer-v1.md), [ADR-0013](0013-cpt-cyber-fabric-adr-minimal-installation-footprint-v1.md), [ADR-0017](0017-cpt-cyber-fabric-adr-unified-agent-first-tool-v1.md)
+- **PRD references** ([PRD.md](../PRD.md)): `cpt-cyber-fabric-fr-skills-cross-tool-registration`, `cpt-cyber-fabric-fr-surface-cli`, `cpt-cyber-fabric-fr-surface-vscode-plugin`, `cpt-cyber-fabric-contract-agentic-tool-host-plugin`
+- **Related decisions**: [ADR-0001](0001-cpt-cyber-fabric-adr-unified-agent-first-tool-v1.md), [ADR-0002](0002-cpt-cyber-fabric-adr-central-fabric-core-v1.md), [ADR-0005](0005-cpt-cyber-fabric-adr-minimal-installation-footprint-v1.md)
 
 This decision directly addresses the following traceability items:
 
