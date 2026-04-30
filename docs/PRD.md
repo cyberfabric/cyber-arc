@@ -507,6 +507,70 @@ The system **MUST** make every operation a user can perform on one surface reach
 
 **Verification Method**: Demonstration — every MVP surface drives a representative scenario for every persona end-to-end; equivalence checklist tracked at release.
 
+---
+
+#### CLI visual references *(v1 — POC captures)*
+
+The screenshots below are real terminal output from the Fabric CLI POC (`fabric-poc`), the v1 surface per `cpt-cyber-fabric-fr-surface-cli` and `cpt-cyber-fabric-interface-cli-surface`. They illustrate the four canonical CLI workflows: discovery (`--help`), prompt rendering (`prompt get`), script discovery (`script help`), and script execution (`script run`).
+
+![Fabric CLI — top-level help](../img/cli-help.png)
+
+> *`fabric-poc --help` — top-level CLI surface.* Lists every verb the v1 CLI exposes: `prompt get / source / help / list / types`, `delegate <claude|codex>`, `prompt delegate`, `script run / help / list`, `api call / list / help`, `register`, `kit install`, `init`, `web run`. This is the canonical entry point for every v1 user — Developer and Prompt Engineer alike. Cross-references: `cpt-cyber-fabric-fr-surface-cli`, `cpt-cyber-fabric-interface-cli-surface`, `cpt-cyber-fabric-fr-skills-cross-tool-registration`, `cpt-cyber-fabric-fr-marketplace-cross-surface`, `cpt-cyber-fabric-usecase-install-fabric`.
+
+---
+
+![Fabric CLI — prompt get](../img/cli-prompt-get.png)
+
+> *`fabric-poc prompt get prd` — rendered prompt output.* Resolves the `prd` prompt from the active kit set, applies layered overrides and variable resolution, and prints the rendered instruction body (here: a router that selects between `prd-brainstorm` / `prd-generate` / `prd-review` / `prd-repair` modes). The downstream commands the prompt suggests (`fabric-poc prompt get prd-brainstorm`, etc.) demonstrate the typed-prompt taxonomy in action. Cross-references: `cpt-cyber-fabric-fr-prompts-typed-markdown`, `cpt-cyber-fabric-fr-prompts-layered-overrides`, `cpt-cyber-fabric-fr-prompts-variable-resolution`, `cpt-cyber-fabric-fr-workspace-aware-prompt-rendering`, `cpt-cyber-fabric-usecase-dev-share-parameterized-prompt`.
+
+---
+
+![Fabric CLI — script help](../img/cli-script-help.png)
+
+> *`fabric-poc script help prompt-scaffold` — script discovery + metadata.* Returns the script's declared frontmatter (id, type, name, description, content), the runtime arguments it accepts, examples, and authoring notes. Backed by the kit manifest declaration per ADR-0017. Cross-references: `cpt-cyber-fabric-fr-kits-only-extension-mechanism`, `cpt-cyber-fabric-usecase-pe-bundle-scripts-with-prompts`, `cpt-cyber-fabric-usecase-pe-author-kit`.
+
+---
+
+![Fabric CLI — script run](../img/cli-script-run.png)
+
+> *`fabric-poc script run prompt-scaffold --id adr --type skill --name adr --description "..."` — deterministic script execution.* Output is a scaffolded prompt: frontmatter (`id`, `type: skill`, `name`, `description`) followed by an `<!-- append "adr_body" -->` block-helper region for the prompt body. Demonstrates how a kit-shipped script (`prompt-scaffold` from `kit-dev`) generates new typed prompts on demand — the exact PE workflow that turns "I have an idea" into "kit-ready prompt". Cross-references: `cpt-cyber-fabric-fr-kits-only-extension-mechanism`, `cpt-cyber-fabric-fr-prompts-typed-markdown`, `cpt-cyber-fabric-usecase-pe-bundle-scripts-with-prompts`, `cpt-cyber-fabric-usecase-pe-author-kit`.
+
+---
+
+#### Web App visual references *(v2 — POC mockups)*
+
+The screenshots below illustrate the eventual Fabric Web App per `cpt-cyber-fabric-fr-surface-web-app` and adjacent v2 FRs (`cpt-cyber-fabric-fr-surface-web-extensions`, `cpt-cyber-fabric-interface-web-extension-contract`). The "POC · MOCK" badge is visible in every screenshot — these are not v1.0 GA artifacts; the first-party Web App lands in **v2**.
+
+![Fabric Web App — Marketplace store](../img/web-01.png)
+
+> *Marketplace store.* Browse the curated `cyber-fabric-official` marketplace; per-kit `+N web` badges flag bundled Web Extensions; tags (`development`, `sdlc`, `testing`, `productivity`, `visual`) drive role-based discovery. Cross-references: `cpt-cyber-fabric-fr-marketplace-cross-surface`, `cpt-cyber-fabric-usecase-dev-install-from-marketplace`.
+
+---
+
+![Fabric Web App — Kit install dialog](../img/web-02.png)
+
+> *Kit install dialog.* User picks the install **scope** (Project / Global) and confirms. The same dialog backs name-resolved install regardless of marketplace origin. Cross-references: `cpt-cyber-fabric-fr-kits-three-scopes`, `cpt-cyber-fabric-usecase-dev-install-from-marketplace`.
+
+---
+
+![Fabric Web App — My Kits](../img/web-03.png)
+
+> *My Kits.* Lifecycle management for installed kits, with scope provenance (`global`, `User`). Side panel splits **FABRIC** core sections (Workspaces, My Kits, Store, Agents) from kit-contributed **EXTENSIONS** (here: SDLC Orchestrator, Claude SDK Chat) — extensions register as Fabric Web Extensions per `cpt-cyber-fabric-fr-surface-web-extensions`. Cross-references: `cpt-cyber-fabric-fr-kits-only-extension-mechanism`, `cpt-cyber-fabric-fr-kits-three-scopes`.
+
+---
+
+![Fabric Web App — Agents](../img/web-04.png)
+
+> *Agents.* Cross-tool skill registration status. Each supported agentic tool (Claude Code, Codex, Cursor, …) reports `detected` / `not detected` and `registered · N prompts` / `not registered`, with scope. The `Register Agents…` action drives the cross-tool registration flow. Cross-references: `cpt-cyber-fabric-fr-skills-cross-tool-registration`, `cpt-cyber-fabric-contract-agentic-tool-host-plugin`, `cpt-cyber-fabric-usecase-dev-use-skill-in-agentic-tool`.
+
+---
+
+![Fabric Web App — Workspace browser, spec editor, and inline chat](../img/web-05.png)
+
+> *Workspace browser with spec editor and inline chat.* Multi-pane layout: workspace tree (`sdlc-kit > prompts/rules/kit.toml/README.md`) on the left, tabbed file editor (`pr-review.md`, `planning.spec.md`) in the middle, table-of-contents navigator on the right, and an inline agentic chat panel anchored to the open file with selectable agent provider. PR Review badge indicates an open PR context. Cross-references: `cpt-cyber-fabric-fr-workspace-named-multi-repo`, `cpt-cyber-fabric-fr-pr-markdown-aware-review`, `cpt-cyber-fabric-usecase-pm-review-from-web-app`, `cpt-cyber-fabric-usecase-pm-author-prd`, `cpt-cyber-fabric-usecase-ux-mockup-and-chat` *(all v2)*.
+
+---
+
 ### 5.5 Git Domain
 
 #### Branches as first-class entities
