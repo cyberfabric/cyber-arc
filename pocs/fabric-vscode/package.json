@@ -1,0 +1,170 @@
+{
+  "name": "fabric-vscode",
+  "displayName": "Fabric",
+  "description": "Manage fabric kits, marketplaces, and agent registration",
+  "version": "0.0.3",
+  "private": true,
+  "publisher": "cyberfabric",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "fabric",
+          "title": "Fabric",
+          "icon": "media/fabric-icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "fabric": [
+        { "id": "fabric.kits", "name": "My Kits" },
+        { "id": "fabric.store", "name": "Store" },
+        { "id": "fabric.agents", "name": "Agents" }
+      ]
+    },
+    "commands": [
+      { "command": "fabric.marketplace.add",     "title": "Fabric: Add Marketplace…" },
+      { "command": "fabric.marketplace.remove",  "title": "Fabric: Remove Marketplace" },
+      { "command": "fabric.marketplace.refresh", "title": "Fabric: Refresh Marketplaces" },
+      { "command": "fabric.store.togglePrereleases", "title": "Fabric: Toggle Pre-releases in Store" },
+      { "command": "fabric.kit.installFromUrl",   "title": "Fabric: Install Kit from URL" },
+      { "command": "fabric.kit.installFromStore", "title": "Fabric: Install Kit from Store" },
+      { "command": "fabric.kit.update",          "title": "Fabric: Update Kit…" },
+      { "command": "fabric.kit.simulateUpgrade", "title": "Fabric PoC: Simulate Marketplace Upgrade" },
+      { "command": "fabric.kit.uninstall", "title": "Fabric: Uninstall Kit…" },
+      { "command": "fabric.agent.register",   "title": "Fabric: Register Agents…" },
+      { "command": "fabric.agent.unregister", "title": "Fabric: Unregister Agents…" },
+      { "command": "fabric.cli.toggleDetected", "title": "Fabric PoC: Toggle CLI Detected" },
+      { "command": "fabric.cli.install",        "title": "Fabric: Install Fabric CLI…" }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "fabric.marketplace.refresh",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        },
+        {
+          "command": "fabric.marketplace.add",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        },
+        {
+          "command": "fabric.store.togglePrereleases",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        },
+        {
+          "command": "fabric.kit.installFromUrl",
+          "when": "view == fabric.store",
+          "group": "navigation"
+        },
+        {
+          "command": "fabric.agent.register",
+          "when": "view == fabric.agents",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "fabric.kit.installFromStore",
+          "when": "view == fabric.store && viewItem == fabric.marketplace.kit",
+          "group": "inline"
+        },
+        {
+          "command": "fabric.kit.update",
+          "when": "view == fabric.kits && viewItem == fabric.kit.updatable",
+          "group": "inline"
+        },
+        {
+          "command": "fabric.kit.uninstall",
+          "when": "view == fabric.kits && viewItem =~ /fabric.kit./",
+          "group": "uninstall"
+        },
+        {
+          "command": "fabric.agent.register",
+          "when": "view == fabric.agents && viewItem == fabric.agent.unregistered",
+          "group": "inline"
+        },
+        {
+          "command": "fabric.agent.unregister",
+          "when": "view == fabric.agents && viewItem == fabric.agent.registered",
+          "group": "inline"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "fabric.kits",
+        "contents": "No fabric kits installed yet.\n\n[Install from URL](command:fabric.kit.installFromUrl)\n\nOr open the Store to browse."
+      },
+      {
+        "view": "fabric.store",
+        "contents": "No marketplaces registered.\n\n[Add Marketplace…](command:fabric.marketplace.add)\n\nBundled fixtures: `cyber-fabric-official`, `community-demo`."
+      },
+      {
+        "view": "fabric.agents",
+        "contents": "Detect and register agents here after installing kits.\n\n[Register Agents…](command:fabric.agent.register)"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "fabric.welcome",
+        "title": "Fabric PoC Quickstart",
+        "description": "Learn the PoC UI and try the core flows",
+        "steps": [
+          {
+            "id": "fabric.welcome.overview",
+            "title": "What this extension does",
+            "description": "Read a short overview of the UI-only PoC.",
+            "media": { "markdown": "media/walkthrough/overview.md" }
+          },
+          {
+            "id": "fabric.welcome.add-marketplace",
+            "title": "Add a marketplace",
+            "description": "Run `Fabric: Add Marketplace…` and enter `cyber-fabric-official`.",
+            "media": { "markdown": "media/walkthrough/overview.md" },
+            "completionEvents": ["onCommand:fabric.marketplace.add"]
+          },
+          {
+            "id": "fabric.welcome.install-kit",
+            "title": "Install a kit",
+            "description": "Expand the marketplace in Store and click a kit. Pick Project scope.",
+            "media": { "markdown": "media/walkthrough/overview.md" },
+            "completionEvents": ["onCommand:fabric.kit.installFromStore", "onCommand:fabric.kit.installFromUrl"]
+          },
+          {
+            "id": "fabric.welcome.register-agent",
+            "title": "Register an agent",
+            "description": "Run `Fabric: Register Agents…` and pick Claude Code.",
+            "media": { "markdown": "media/walkthrough/overview.md" },
+            "completionEvents": ["onCommand:fabric.agent.register"]
+          },
+          {
+            "id": "fabric.welcome.install-cli",
+            "title": "Install the Fabric CLI (mock)",
+            "description": "Toggle `detectCli` to missing, then click the status-bar entry.",
+            "media": { "markdown": "media/walkthrough/install.md" },
+            "completionEvents": ["onCommand:fabric.cli.install"]
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "compile-types": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}

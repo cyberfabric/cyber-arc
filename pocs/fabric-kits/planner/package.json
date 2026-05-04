@@ -1,0 +1,12 @@
+{
+  "name": "@cyberfabric-kits/planner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic core scripts for the fabric planner kit",
+  "dependencies": {
+    "@iarna/toml": "^2.2.5"
+  },
+  "scripts": {
+    "test": "node --test test/planner.test.js"
+  }
+}

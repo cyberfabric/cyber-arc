@@ -1,0 +1,7 @@
+schema_version = 1
+
+name = "with-header"
+description = "Fixture API with raw header auth"
+base_url = "http://MOCK_SERVER_URL_PLACEHOLDER"
+auth_ref = "header-creds"
+default_headers = { "X-Default" = "yes" }

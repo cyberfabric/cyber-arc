@@ -1,0 +1,6 @@
+schema_version = 1
+
+name = "with-basic"
+description = "Fixture API with basic auth"
+base_url = "http://MOCK_SERVER_URL_PLACEHOLDER"
+auth_ref = "basic-creds"

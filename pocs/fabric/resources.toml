@@ -1,0 +1,9 @@
+schema_version = 1
+
+prompt_files = [
+  "prompts/questions-at-end.md",
+  "prompts/kit.md",
+  "prompts/kit-register.md",
+]
+
+script_files = []

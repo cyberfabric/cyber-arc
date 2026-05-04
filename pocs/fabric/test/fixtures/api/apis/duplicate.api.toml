@@ -1,0 +1,5 @@
+schema_version = 1
+
+name = "sample"
+description = "Duplicate name for duplicate-detection test"
+base_url = "http://MOCK_SERVER_URL_PLACEHOLDER"

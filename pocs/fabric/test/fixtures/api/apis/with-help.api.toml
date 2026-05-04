@@ -1,0 +1,11 @@
+schema_version = 1
+
+name = "with-help"
+description = "Fixture API with authored help"
+base_url = "http://MOCK_SERVER_URL_PLACEHOLDER"
+
+# <!-- help -->
+# ## Usage
+#
+# Run `fabric-poc api call with-help /ping` to hit the echo server.
+# <!-- /help -->

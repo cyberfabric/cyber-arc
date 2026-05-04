@@ -1,0 +1,14 @@
+schema_version = 1
+
+[credentials.bearer-token]
+type = "bearer"
+token = "test-bearer-abc123"
+
+[credentials.basic-creds]
+type = "basic"
+username = "alice"
+password = "secret"
+
+[credentials.header-creds]
+type = "header"
+headers = { "X-API-Key" = "api-key-xyz" }
