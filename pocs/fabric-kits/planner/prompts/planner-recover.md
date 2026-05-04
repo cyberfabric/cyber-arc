@@ -11,7 +11,7 @@ Use the user's request as the routing input. Expect a path to an existing plan d
 
 <!-- append "planner_recover_workflow" -->
 1. Resolve `<plan_dir>`. Confirm `<plan_dir>/plan.toml` exists.
-2. Run `fabric script run plan-resume <plan_dir>` (read-only by default). The script:
+2. Run `fabric-poc script run plan-resume <plan_dir>` (read-only by default). The script:
    - Audits every phase marked `done` against on-disk presence of its brief, phase file, and intermediate `outputs`.
    - Lists the cascade of phases that need to be reopened (transitively, through `depends_on`).
    - Recommends a `lifecycle_repair` when work is reopened (resets `lifecycle_status` to `pending` for all lifecycles except `gitignore`).
@@ -32,7 +32,7 @@ Use the user's request as the routing input. Expect a path to an existing plan d
    ```
    Apply recovery and rewrite plan.toml? [y/n]
    ```
-6. On `y`, run `fabric script run plan-resume <plan_dir> --apply` and re-run `fabric script run plan-status <plan_dir>` to confirm the post-recovery state. On `n`, stop without mutating anything.
+6. On `y`, run `fabric-poc script run plan-resume <plan_dir> --apply` and re-run `fabric-poc script run plan-status <plan_dir>` to confirm the post-recovery state. On `n`, stop without mutating anything.
 <!-- /append -->
 
 <!-- append "planner_recover_cleanup_exemption" -->

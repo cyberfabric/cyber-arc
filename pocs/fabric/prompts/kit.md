@@ -2,11 +2,11 @@
 id: kit
 type: skill
 name: kit
-description: Route the current fabric kit lifecycle request into the correct kit mode and load the matching rules through fabric
+description: Route the current fabric-poc kit lifecycle request into the correct kit mode and load the matching rules through fabric
 ---
 
 <!-- append "routing_input" -->
-Use the user's current fabric kit lifecycle request as the routing input. A "kit" is a directory that declares fabric prompts and/or scripts through a `resources.toml` manifest with `prompt_files` and `script_files` globs.
+Use the user's current fabric-poc kit lifecycle request as the routing input. A "kit" is a directory that declares fabric prompts and/or scripts through a `resources.toml` manifest with `prompt_files` and `script_files` globs.
 <!-- /append -->
 
 <!-- append "routing_mode_selection" -->
@@ -14,7 +14,7 @@ Use the user's current fabric kit lifecycle request as the routing input. A "kit
 
    | Mode        | When to pick                                                                                                                                                   | Load                                 |
    | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-   | `register`  | The user wants to (re)register an existing kit's prompts and scripts so skill entry points and manifest coverage are refreshed, without changing the kit contents. | `fabric prompt get kit-register`     |
+   | `register`  | The user wants to (re)register an existing kit's prompts and scripts so skill entry points and manifest coverage are refreshed, without changing the kit contents. | `fabric-poc prompt get kit-register`     |
 <!-- /append -->
 
 <!-- append "routing_clarification" -->

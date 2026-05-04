@@ -14,12 +14,12 @@ Use the user's current planning request as the routing input.
 
    | Mode         | When to pick                                                                                                                              | Load                                       |
    | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-   | `brainstorm` | Decide task type, decomposition strategy, lifecycle, and which available skills / sub-agents to integrate per phase before any plan files exist. | `fabric prompt get planner-brainstorm`     |
-   | `generate`   | Produce `plan.toml`, all `brief-*` files, and all `phase-*` files for a task whose decomposition is decided.                              | `fabric prompt get planner-generate`       |
-   | `execute`    | Load and run the next executable phase from an existing `plan.toml` (sub-agent dispatch by default; inline fallback).                     | `fabric prompt get planner-execute`        |
-   | `status`     | Report the current state of an existing plan from its `plan.toml`.                                                                        | `fabric prompt get planner-status`         |
-   | `recover`    | Audit an abandoned or partially completed plan, repair manifest / lifecycle state, and resume from the earliest executable phase.         | `fabric prompt get planner-recover`        |
-   | `review`     | Re-validate an existing plan after edits against `plan-checklist`.                                                                        | `fabric prompt get planner-review`         |
+   | `brainstorm` | Decide task type, decomposition strategy, lifecycle, and which available skills / sub-agents to integrate per phase before any plan files exist. | `fabric-poc prompt get planner-brainstorm`     |
+   | `generate`   | Produce `plan.toml`, all `brief-*` files, and all `phase-*` files for a task whose decomposition is decided.                              | `fabric-poc prompt get planner-generate`       |
+   | `execute`    | Load and run the next executable phase from an existing `plan.toml` (sub-agent dispatch by default; inline fallback).                     | `fabric-poc prompt get planner-execute`        |
+   | `status`     | Report the current state of an existing plan from its `plan.toml`.                                                                        | `fabric-poc prompt get planner-status`         |
+   | `recover`    | Audit an abandoned or partially completed plan, repair manifest / lifecycle state, and resume from the earliest executable phase.         | `fabric-poc prompt get planner-recover`        |
+   | `review`     | Re-validate an existing plan after edits against `plan-checklist`.                                                                        | `fabric-poc prompt get planner-review`         |
 <!-- /append -->
 
 <!-- append "routing_clarification" -->

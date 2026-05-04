@@ -72,7 +72,7 @@ module.exports = {
       "Helps catch the silent-invisible failure mode where a prompt or script is authored in a directory not covered by any manifest.",
     ],
     usage: [
-      "fabric script run prompt-register-dryrun <path-to-file> [--type prompt|script]",
+      "fabric-poc script run prompt-register-dryrun <path-to-file> [--type prompt|script]",
     ],
     parameters: [
       { name: "path", type: "string", required: true, description: "Absolute or cwd-relative path to the file to test. Positional argument." },
@@ -81,11 +81,11 @@ module.exports = {
     returns: "JSON object with file, type, covered, matches (manifest + glob pairs that cover the file), and allGlobs (every active glob for the selected type). matches is empty when the file is invisible.",
     examples: [
       {
-        command: "fabric script run prompt-register-dryrun pocs/fabric-kits/prompting/prompts/prompt.md",
+        command: "fabric-poc script run prompt-register-dryrun pocs/fabric-kits/prompting/prompts/prompt.md",
         description: "Confirm the prompt router markdown is covered by a prompt_files glob (default).",
       },
       {
-        command: "fabric script run prompt-register-dryrun pocs/fabric-kits/prompting/scripts/prompt-lint.js --type script",
+        command: "fabric-poc script run prompt-register-dryrun pocs/fabric-kits/prompting/scripts/prompt-lint.js --type script",
         description: "Confirm the prompt-lint script is covered by a script_files glob.",
       },
     ],

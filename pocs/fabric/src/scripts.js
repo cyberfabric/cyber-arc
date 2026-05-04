@@ -293,7 +293,7 @@ function getScriptHelp(id, options = {}) {
 
   const usageLines = script.interface.usage.length > 0
     ? script.interface.usage
-    : [`fabric script run ${script.id} [parameters...]`];
+    : [`fabric-poc script run ${script.id} [parameters...]`];
   const lines = [
     `ID: ${script.id}`,
     `Name: ${script.name}`,

@@ -75,7 +75,7 @@ function setupApiFixtures(tempHome, mockUrl, { includeDuplicate = false } = {}) 
   return { apiGlob, manifestPath, copied };
 }
 
-test("fabric init creates a local empty resources manifest without bootstrapping the global registry", () => {
+test("fabric-poc init creates a local empty resources manifest without bootstrapping the global registry", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-init-home-"));
   const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-init-workspace-"));
   const localManifest = path.join(tempWorkspace, ".fabric", "resources.toml");
@@ -100,7 +100,7 @@ test("fabric init creates a local empty resources manifest without bootstrapping
   }
 });
 
-test("fabric prompt source returns prompt documents with markers for the resolved prompt", () => {
+test("fabric-poc prompt source returns prompt documents with markers for the resolved prompt", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-prompt-source-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -133,7 +133,7 @@ test("fabric prompt source returns prompt documents with markers for the resolve
   }
 });
 
-test("fabric prompt list returns a concise table of active prompts", () => {
+test("fabric-poc prompt list returns a concise table of active prompts", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-prompt-list-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -160,7 +160,7 @@ test("fabric prompt list returns a concise table of active prompts", () => {
   }
 });
 
-test("fabric prompt list --verbose returns detailed help for each active prompt", () => {
+test("fabric-poc prompt list --verbose returns detailed help for each active prompt", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-prompt-list-verbose-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -204,7 +204,7 @@ test("fabric prompt list --verbose returns detailed help for each active prompt"
   }
 });
 
-test("fabric prompt help returns the authored help section between markers", () => {
+test("fabric-poc prompt help returns the authored help section between markers", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-prompt-help-home-"));
   const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-prompt-help-ws-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
@@ -228,7 +228,7 @@ test("fabric prompt help returns the authored help section between markers", () 
       "<!-- help -->",
       "## Usage",
       "",
-      "Run `fabric prompt get doc-sample` to get the compiled prompt body.",
+      "Run `fabric-poc prompt get doc-sample` to get the compiled prompt body.",
       "Use `--foo=bar` to pass a fake option (authored example).",
       "<!-- /help -->",
       "",
@@ -246,7 +246,7 @@ test("fabric prompt help returns the authored help section between markers", () 
     const expected = [
       "## Usage",
       "",
-      "Run `fabric prompt get doc-sample` to get the compiled prompt body.",
+      "Run `fabric-poc prompt get doc-sample` to get the compiled prompt body.",
       "Use `--foo=bar` to pass a fake option (authored example).",
     ].join("\n");
 
@@ -259,7 +259,7 @@ test("fabric prompt help returns the authored help section between markers", () 
   }
 });
 
-test("fabric prompt help falls back to frontmatter metadata when no marker is present", () => {
+test("fabric-poc prompt help falls back to frontmatter metadata when no marker is present", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-prompt-help-fallback-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -289,7 +289,7 @@ test("fabric prompt help falls back to frontmatter metadata when no marker is pr
   }
 });
 
-test("fabric prompt help returns an error for an unknown prompt", () => {
+test("fabric-poc prompt help returns an error for an unknown prompt", () => {
   const result = spawnSync(process.execPath, [cliPath, "prompt", "help", "definitely-missing"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -300,7 +300,7 @@ test("fabric prompt help returns an error for an unknown prompt", () => {
   assert.equal(result.stderr, "Unknown prompt: definitely-missing\n");
 });
 
-test("fabric prompt types returns a concise catalog of allowed prompt types", () => {
+test("fabric-poc prompt types returns a concise catalog of allowed prompt types", () => {
   const result = spawnSync(process.execPath, [cliPath, "prompt", "types"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -319,7 +319,7 @@ test("fabric prompt types returns a concise catalog of allowed prompt types", ()
   }
 });
 
-test("fabric prompt types --verbose returns required frontmatter and authoring notes per type", () => {
+test("fabric-poc prompt types --verbose returns required frontmatter and authoring notes per type", () => {
   const result = spawnSync(process.execPath, [cliPath, "prompt", "types", "--verbose"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -386,7 +386,7 @@ test("overlay prompt files can omit type when another prompt with the same id de
   assert.equal(prompts.get("sample-overlay-without-type"), "Checklist body overridden without explicit type.");
 });
 
-test("fabric register generates global Claude and Agents skill entry points", () => {
+test("fabric-poc register generates global Claude and Agents skill entry points", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-home-"));
 
   try {
@@ -417,7 +417,7 @@ test("fabric register generates global Claude and Agents skill entry points", ()
   }
 });
 
-test("fabric register --local generates skill entry points in the current workspace", () => {
+test("fabric-poc register --local generates skill entry points in the current workspace", () => {
   const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-local-"));
 
   try {
@@ -462,13 +462,13 @@ test("fabric register --local generates skill entry points in the current worksp
     assert.equal(fs.existsSync(localClaudeOnly), true);
     assert.equal(fs.existsSync(localAgentsOnly), true);
     assert.equal(fs.existsSync(localClaudeHello), false);
-    assert.match(fs.readFileSync(localClaudeOnly, "utf8"), /^---\nname: fabric-local-only\ndescription: "Local-only test skill: safe"\n---\n\nEXECUTE and FOLLOW `fabric prompt get local-only`\n$/);
+    assert.match(fs.readFileSync(localClaudeOnly, "utf8"), /^---\nname: fabric-local-only\ndescription: "Local-only test skill: safe"\n---\n\nEXECUTE and FOLLOW `fabric-poc prompt get local-only`\n$/);
   } finally {
     fs.rmSync(tempWorkspace, { recursive: true, force: true });
   }
 });
 
-test("fabric register --local --include-global generates local and global skill entry points in the current workspace", () => {
+test("fabric-poc register --local --include-global generates local and global skill entry points in the current workspace", () => {
   const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-local-include-global-"));
 
   try {
@@ -511,13 +511,13 @@ test("fabric register --local --include-global generates local and global skill 
 
     assert.equal(fs.existsSync(localClaudeOnly), true);
     assert.equal(fs.existsSync(localClaudeHello), false);
-    assert.match(fs.readFileSync(localClaudeOnly, "utf8"), /^---\nname: fabric-local-only\ndescription: "Local-only test skill: safe"\n---\n\nEXECUTE and FOLLOW `fabric prompt get local-only`\n$/);
+    assert.match(fs.readFileSync(localClaudeOnly, "utf8"), /^---\nname: fabric-local-only\ndescription: "Local-only test skill: safe"\n---\n\nEXECUTE and FOLLOW `fabric-poc prompt get local-only`\n$/);
   } finally {
     fs.rmSync(tempWorkspace, { recursive: true, force: true });
   }
 });
 
-test("fabric register --local writes sub-agent entry points for type: agent prompts", () => {
+test("fabric-poc register --local writes sub-agent entry points for type: agent prompts", () => {
   const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-agent-local-"));
 
   try {
@@ -592,7 +592,7 @@ test("fabric register --local writes sub-agent entry points for type: agent prom
       'description: "Local agent: persona"',
       "---",
       "",
-      "EXECUTE and FOLLOW `fabric prompt get local-agent`",
+      "EXECUTE and FOLLOW `fabric-poc prompt get local-agent`",
       "",
     ].join("\n");
     assert.equal(fs.readFileSync(localClaudeAgent, "utf8"), expectedAgentBody);
@@ -602,7 +602,7 @@ test("fabric register --local writes sub-agent entry points for type: agent prom
   }
 });
 
-test("fabric register <path> generates global agent entry points for type: agent prompts in a kit", () => {
+test("fabric-poc register <path> generates global agent entry points for type: agent prompts in a kit", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-agent-kit-home-"));
   const tempKit = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-register-agent-kit-"));
 
@@ -647,14 +647,14 @@ test("fabric register <path> generates global agent entry points for type: agent
     assert.equal(fs.existsSync(claudeAgent), true);
     assert.equal(fs.existsSync(agentsAgent), true);
     assert.equal(fs.existsSync(claudeSkill), false);
-    assert.match(fs.readFileSync(claudeAgent, "utf8"), /^---\nname: fabric-kit-agent\ndescription: "Kit agent: scoped persona"\n---\n\nEXECUTE and FOLLOW `fabric prompt get kit-agent`\n$/);
+    assert.match(fs.readFileSync(claudeAgent, "utf8"), /^---\nname: fabric-kit-agent\ndescription: "Kit agent: scoped persona"\n---\n\nEXECUTE and FOLLOW `fabric-poc prompt get kit-agent`\n$/);
   } finally {
     fs.rmSync(tempHome, { recursive: true, force: true });
     fs.rmSync(tempKit, { recursive: true, force: true });
   }
 });
 
-test("fabric delegate claude forwards prompt and returns delegated response", () => {
+test("fabric-poc delegate claude forwards prompt and returns delegated response", () => {
   const result = spawnSync(
     process.execPath,
     [cliPath, "delegate", "claude", "hello from host"],
@@ -672,7 +672,7 @@ test("fabric delegate claude forwards prompt and returns delegated response", ()
   assert.equal(result.stderr, "");
 });
 
-test("fabric prompt delegate codex forwards named prompt and returns delegated response", () => {
+test("fabric-poc prompt delegate codex forwards named prompt and returns delegated response", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-prompt-delegate-codex-home-"));
 
   try {
@@ -703,7 +703,7 @@ test("fabric prompt delegate codex forwards named prompt and returns delegated r
   }
 });
 
-test("fabric script run executes a registered global script", () => {
+test("fabric-poc script run executes a registered global script", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-script-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -725,7 +725,7 @@ test("fabric script run executes a registered global script", () => {
   }
 });
 
-test("fabric script help returns detailed help for a registered global script", () => {
+test("fabric-poc script help returns detailed help for a registered global script", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-script-help-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -747,7 +747,7 @@ test("fabric script help returns detailed help for a registered global script", 
       `File: ${scriptPath}`,
       "",
       "Usage:",
-      "  fabric script run kit-hello-script <value> [more-values...]",
+      "  fabric-poc script run kit-hello-script <value> [more-values...]",
       "",
       "Script module interface:",
       "  run(args, context)",
@@ -772,7 +772,7 @@ test("fabric script help returns detailed help for a registered global script", 
       "  String formatted as `kit-script:<comma-separated args>`.",
       "",
       "Examples:",
-      "  - fabric script run kit-hello-script alpha beta",
+      "  - fabric-poc script run kit-hello-script alpha beta",
       "    Returns `kit-script:alpha,beta`.",
       "",
       "Notes:",
@@ -894,10 +894,10 @@ test("script-lint accepts interface shorthand forms that Fabric normalizes at ru
       '  description: "valid loose interface",',
       "  interface: {",
       '    details: "one line",',
-      '    usage: "fabric script run valid-loose",',
+      '    usage: "fabric-poc script run valid-loose",',
       '    parameters: ["path"],',
       '    returns: "plain text",',
-      '    examples: ["fabric script run valid-loose"],',
+      '    examples: ["fabric-poc script run valid-loose"],',
       '    notes: "note",',
       "  },",
       "  run() {",
@@ -924,7 +924,7 @@ test("script-lint accepts interface shorthand forms that Fabric normalizes at ru
   }
 });
 
-test("fabric script list returns a concise table of active scripts", () => {
+test("fabric-poc script list returns a concise table of active scripts", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-script-list-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -951,7 +951,7 @@ test("fabric script list returns a concise table of active scripts", () => {
   }
 });
 
-test("fabric script list --verbose returns detailed help for each active script", () => {
+test("fabric-poc script list --verbose returns detailed help for each active script", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-script-list-verbose-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -973,7 +973,7 @@ test("fabric script list --verbose returns detailed help for each active script"
       `File: ${scriptPath}`,
       "",
       "Usage:",
-      "  fabric script run kit-hello-script <value> [more-values...]",
+      "  fabric-poc script run kit-hello-script <value> [more-values...]",
       "",
       "Script module interface:",
       "  run(args, context)",
@@ -998,7 +998,7 @@ test("fabric script list --verbose returns detailed help for each active script"
       "  String formatted as `kit-script:<comma-separated args>`.",
       "",
       "Examples:",
-      "  - fabric script run kit-hello-script alpha beta",
+      "  - fabric-poc script run kit-hello-script alpha beta",
       "    Returns `kit-script:alpha,beta`.",
       "",
       "Notes:",
@@ -1047,7 +1047,7 @@ test("fabric merges legacy prompts.toml and scripts.toml into resources.toml aut
   }
 });
 
-test("fabric prompt get returns error for unknown prompt", () => {
+test("fabric-poc prompt get returns error for unknown prompt", () => {
   const result = spawnSync(process.execPath, [cliPath, "prompt", "get", "unknown"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -1058,7 +1058,7 @@ test("fabric prompt get returns error for unknown prompt", () => {
   assert.equal(result.stderr, "Unknown prompt: unknown\n");
 });
 
-test("fabric prompt source returns error for unknown prompt", () => {
+test("fabric-poc prompt source returns error for unknown prompt", () => {
   const result = spawnSync(process.execPath, [cliPath, "prompt", "source", "unknown"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -1069,7 +1069,7 @@ test("fabric prompt source returns error for unknown prompt", () => {
   assert.equal(result.stderr, "Unknown prompt: unknown\n");
 });
 
-test("fabric script run returns error for unknown script", () => {
+test("fabric-poc script run returns error for unknown script", () => {
   const result = spawnSync(process.execPath, [cliPath, "script", "run", "unknown-script"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -1080,7 +1080,7 @@ test("fabric script run returns error for unknown script", () => {
   assert.equal(result.stderr, "Unknown script: unknown-script\n");
 });
 
-test("fabric script help returns error for unknown script", () => {
+test("fabric-poc script help returns error for unknown script", () => {
   const result = spawnSync(process.execPath, [cliPath, "script", "help", "unknown-script"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -1115,7 +1115,7 @@ test("fabric does not re-merge the built-in core manifest into an existing globa
   }
 });
 
-test("fabric register ignores commented prompt file entries in the global registry", () => {
+test("fabric-poc register ignores commented prompt file entries in the global registry", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-commented-registry-home-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -1137,7 +1137,7 @@ test("fabric register ignores commented prompt file entries in the global regist
   }
 });
 
-test("fabric register <path> adds resources to the global registry and generates global skills", () => {
+test("fabric-poc register <path> adds resources to the global registry and generates global skills", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-kit-register-home-"));
 
   try {
@@ -1173,7 +1173,7 @@ test("fabric register <path> adds resources to the global registry and generates
   }
 });
 
-test("fabric register --local <path> writes only to local registries and local skill roots", () => {
+test("fabric-poc register --local <path> writes only to local registries and local skill roots", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-kit-register-home-"));
   const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-kit-register-workspace-"));
   const outsideWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-kit-register-outside-"));
@@ -1236,7 +1236,7 @@ test("fabric register --local <path> writes only to local registries and local s
   }
 });
 
-test("fabric register --local <path> --include-global writes local registries and generates local skills from both local and global prompts", () => {
+test("fabric-poc register --local <path> --include-global writes local registries and generates local skills from both local and global prompts", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-kit-register-home-include-global-"));
   const tempWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-kit-register-workspace-include-global-"));
 
@@ -1264,7 +1264,7 @@ test("fabric register --local <path> --include-global writes local registries an
   }
 });
 
-test("fabric api list with no APIs returns an empty table", () => {
+test("fabric-poc api list with no APIs returns an empty table", () => {
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-list-empty-"));
   const globalRegistryDir = path.join(tempHome, ".fabric");
   const globalRegistryPath = path.join(globalRegistryDir, "resources.toml");
@@ -1286,7 +1286,7 @@ test("fabric api list with no APIs returns an empty table", () => {
   }
 });
 
-test("fabric api list returns a row per registered API", async () => {
+test("fabric-poc api list returns a row per registered API", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-list-"));
   try {
@@ -1309,7 +1309,7 @@ test("fabric api list returns a row per registered API", async () => {
   }
 });
 
-test("fabric api help prints the authored help section when present", async () => {
+test("fabric-poc api help prints the authored help section when present", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-help-authored-"));
   try {
@@ -1323,14 +1323,14 @@ test("fabric api help prints the authored help section when present", async () =
     assert.equal(result.status, 0);
     assert.equal(result.stderr, "");
     assert.ok(result.stdout.includes("## Usage"));
-    assert.ok(result.stdout.includes("fabric api call with-help /ping"));
+    assert.ok(result.stdout.includes("fabric-poc api call with-help /ping"));
   } finally {
     await mock.close();
     fs.rmSync(tempHome, { recursive: true, force: true });
   }
 });
 
-test("fabric api help falls back to metadata when no marker is present", async () => {
+test("fabric-poc api help falls back to metadata when no marker is present", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-help-fallback-"));
   try {
@@ -1354,7 +1354,7 @@ test("fabric api help falls back to metadata when no marker is present", async (
   }
 });
 
-test("fabric api help returns an error for an unknown API", () => {
+test("fabric-poc api help returns an error for an unknown API", () => {
   const result = spawnSync(process.execPath, [cliPath, "api", "help", "definitely-missing"], {
     encoding: "utf8",
     env: buildCliEnv(),
@@ -1365,7 +1365,7 @@ test("fabric api help returns an error for an unknown API", () => {
   assert.equal(result.stderr, "Unknown API: definitely-missing\n");
 });
 
-test("fabric api call GET reaches the mock server and returns the body", async () => {
+test("fabric-poc api call GET reaches the mock server and returns the body", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-get-"));
   try {
@@ -1384,7 +1384,7 @@ test("fabric api call GET reaches the mock server and returns the body", async (
   }
 });
 
-test("fabric api call POST --json sets Content-Type and body", async () => {
+test("fabric-poc api call POST --json sets Content-Type and body", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-post-"));
   try {
@@ -1408,7 +1408,7 @@ test("fabric api call POST --json sets Content-Type and body", async () => {
   }
 });
 
-test("fabric api call -H forwards the header verbatim", async () => {
+test("fabric-poc api call -H forwards the header verbatim", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-header-"));
   try {
@@ -1428,7 +1428,7 @@ test("fabric api call -H forwards the header verbatim", async () => {
   }
 });
 
-test("fabric api call exits 1 on non-2xx and writes status to stderr", async () => {
+test("fabric-poc api call exits 1 on non-2xx and writes status to stderr", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-error-"));
   try {
@@ -1445,7 +1445,7 @@ test("fabric api call exits 1 on non-2xx and writes status to stderr", async () 
   }
 });
 
-test("fabric api call injects Bearer Authorization from auth.toml", async () => {
+test("fabric-poc api call injects Bearer Authorization from auth.toml", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-bearer-"));
   try {
@@ -1462,7 +1462,7 @@ test("fabric api call injects Bearer Authorization from auth.toml", async () => 
   }
 });
 
-test("fabric api call injects Basic Authorization from auth.toml", async () => {
+test("fabric-poc api call injects Basic Authorization from auth.toml", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-basic-"));
   try {
@@ -1480,7 +1480,7 @@ test("fabric api call injects Basic Authorization from auth.toml", async () => {
   }
 });
 
-test("fabric api call with header-type credential sets each declared header", async () => {
+test("fabric-poc api call with header-type credential sets each declared header", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-header-auth-"));
   try {
@@ -1498,7 +1498,7 @@ test("fabric api call with header-type credential sets each declared header", as
   }
 });
 
-test("fabric api call fails when auth_ref points to a missing credential", async () => {
+test("fabric-poc api call fails when auth_ref points to a missing credential", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-call-missing-cred-"));
   try {
@@ -1521,7 +1521,7 @@ test("fabric api call fails when auth_ref points to a missing credential", async
   }
 });
 
-test("fabric api list throws on duplicate API names", async () => {
+test("fabric-poc api list throws on duplicate API names", async () => {
   const mock = await createMockServer();
   const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fabric-api-dup-"));
   try {
@@ -2239,7 +2239,7 @@ test("registerKitFolder defaults to installKit and reports install metadata in r
   }
 });
 
-test("fabric register <path> --local --no-install succeeds for a kit with no dependencies", () => {
+test("fabric-poc register <path> --local --no-install succeeds for a kit with no dependencies", () => {
   const { kitDir, tempHome } = makeRegisterKitFixture("cli-no-install-none");
   try {
     const result = spawnSync(process.execPath, [cliPath, "register", kitDir, "--local", "--no-install"], {
@@ -2255,7 +2255,7 @@ test("fabric register <path> --local --no-install succeeds for a kit with no dep
   }
 });
 
-test("fabric register <path> --local --no-install fails when kit has package.json but no node_modules", () => {
+test("fabric-poc register <path> --local --no-install fails when kit has package.json but no node_modules", () => {
   const { kitDir, tempHome } = makeRegisterKitFixture("cli-no-install-missing");
   try {
     fs.writeFileSync(path.join(kitDir, "package.json"), '{"name":"k","version":"0.0.0"}', "utf8");
@@ -2273,7 +2273,7 @@ test("fabric register <path> --local --no-install fails when kit has package.jso
   }
 });
 
-test("fabric kit install <path> runs the install path for a strategy=none kit and reports skip", () => {
+test("fabric-poc kit install <path> runs the install path for a strategy=none kit and reports skip", () => {
   const { kitDir, tempHome } = makeRegisterKitFixture("cli-kit-install-skip");
   try {
     const result = spawnSync(process.execPath, [cliPath, "kit", "install", kitDir], {
@@ -2290,7 +2290,7 @@ test("fabric kit install <path> runs the install path for a strategy=none kit an
   }
 });
 
-test("fabric kit install <path> verifies a vendored kit and reports verify", () => {
+test("fabric-poc kit install <path> verifies a vendored kit and reports verify", () => {
   const { kitDir, tempHome } = makeRegisterKitFixture("cli-kit-install-vendored");
   try {
     fs.writeFileSync(path.join(kitDir, "resources.toml"), [

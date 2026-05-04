@@ -33,7 +33,7 @@ The phase compiled from this brief is self-contained. The compiler MUST read thi
 - Template sections (H2 numbers from the target template, when applicable): `{template_sections}`
 - Checklist sections (H2 numbers from the target checklist, when applicable): `{checklist_sections}`
 - Skills loaded as companions (read-and-follow rules at runtime): `{skills_loaded[role=companion]}`
-- Skills invoked as tools (`fabric script run` / registered slash command): `{skills_loaded[role=tool]}`
+- Skills invoked as tools (`fabric-poc script run` / registered slash command): `{skills_loaded[role=tool]}`
 - Sub-agents dispatched: `{subagents_dispatched}`
 - Estimated phase file size: `~{phase_file_lines}` lines
 - Context budget: `phase_file_lines + sum(input_files) + sum(inputs) + estimated_output_lines` ≤ `2000`
@@ -44,7 +44,7 @@ Files the compiler MUST read before assembling the phase file. Each entry names 
 - `path = {absolute or plan-relative path}`, `reason = {why this is needed}`, `sections = {H2 numbers or line ranges}`
 - ...
 
-For every `skills_loaded` entry with `role = companion`, the runtime Load step in the phase file MUST include `fabric prompt get {id}`; the brief lists the id and the purpose so the compiler can render that line.
+For every `skills_loaded` entry with `role = companion`, the runtime Load step in the phase file MUST include `fabric-poc prompt get {id}`; the brief lists the id and the purpose so the compiler can render that line.
 
 For every `subagents_dispatched` entry, the brief lists the agent name, the role (`delegate` | `companion-runner`), and the purpose; the compiler renders the Dispatch section in the phase file accordingly.
 
@@ -81,7 +81,7 @@ Load Instructions discipline:
 - Every path is absolute or plan-relative. No globs, no wildcards — explicit list.
 - Every entry names the section / line range to retain. The compiler must NOT keep full file bodies once the slice is extracted.
 - Every entry names the reason. A path with no reason is a `plan-lint` finding.
-- Companion skills appear here as a single `fabric prompt get {id}` line per skill, with `reason = "load companion methodology"`.
+- Companion skills appear here as a single `fabric-poc prompt get {id}` line per skill, with `reason = "load companion methodology"`.
 - Tool skills appear here only when their output is needed at compile time (rare). Most tool invocations belong in the phase file's Task section instead.
 - Raw-input chunk files (`{plan_dir}/input/*.md`) appear here exactly as named in `plan.input_chunks`; the compiler MUST NOT widen the chunk list.
 <!-- /append -->

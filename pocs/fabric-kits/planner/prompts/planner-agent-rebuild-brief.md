@@ -47,7 +47,7 @@ Build the brief JSON spec required by `plan-brief-write`:
 }
 ```
 
-Run `fabric script run plan-brief-write --output {plan_dir}/{brief_file} --spec '<json>'`. The script validates required fields and the canonical naming; trust its validation as the deterministic gate.
+Run `fabric-poc script run plan-brief-write --output {plan_dir}/{brief_file} --spec '<json>'`. The script validates required fields and the canonical naming; trust its validation as the deterministic gate.
 <!-- /append -->
 
 <!-- append "planner_agent_rebuild_brief_return" -->

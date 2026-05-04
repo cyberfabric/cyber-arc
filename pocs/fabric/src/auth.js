@@ -96,7 +96,7 @@ function buildApplier(credential) {
 
 /**
  * Look up the declared credential type without producing an applier. Used by
- * `fabric api help` to show "Auth: github-token (bearer)" without touching
+ * `fabric-poc api help` to show "Auth: github-token (bearer)" without touching
  * secret values. Returns undefined if the credential is not declared.
  */
 function describeCredential(credentialName, options = {}) {

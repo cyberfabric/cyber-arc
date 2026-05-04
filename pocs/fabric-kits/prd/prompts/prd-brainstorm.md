@@ -109,11 +109,11 @@ Use PRD brainstorming mode.
 <!-- /append -->
 
 <!-- append "brainstorm_generate_handoff" -->
-12. When enough decisions have been made, explicitly say that the brainstorm is complete and recommend loading the next workflow with `fabric prompt get prd-generate` to produce the actual PRD.
+12. When enough decisions have been made, explicitly say that the brainstorm is complete and recommend loading the next workflow with `fabric-poc prompt get prd-generate` to produce the actual PRD.
 <!-- /append -->
 
 <!-- append "brainstorm_generate_handoff_summary" -->
-13. Before recommending `fabric prompt get prd-generate`, summarize the final decision state so the next workflow can use it cleanly:
+13. Before recommending `fabric-poc prompt get prd-generate`, summarize the final decision state so the next workflow can use it cleanly:
    - accepted decisions
    - key rationale and trade-offs
    - unresolved questions
@@ -124,5 +124,5 @@ Use PRD brainstorming mode.
 14. End each substantial round with one of these outcomes:
    - the next batch of role-based questions
    - an updated decision summary mapped to PRD sections
-   - a recommendation that the brainstorm is complete and the next step is `fabric prompt get prd-generate`
+   - a recommendation that the brainstorm is complete and the next step is `fabric-poc prompt get prd-generate`
 <!-- /append -->

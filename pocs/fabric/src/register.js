@@ -31,7 +31,7 @@ function buildEntryFrontmatter(prompt) {
     `description: ${toYamlDoubleQuotedString(prompt.description)}`,
     "---",
     "",
-    `EXECUTE and FOLLOW \`fabric prompt get ${prompt.id}\``,
+    `EXECUTE and FOLLOW \`fabric-poc prompt get ${prompt.id}\``,
     "",
   ].join("\n");
 }

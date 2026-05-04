@@ -10,7 +10,7 @@ Use PRD generation mode.
 <!-- /append -->
 
 <!-- append "generate_load_template" -->
-1. First load the PRD template with `fabric prompt get prd-template` and use that template structure for the generated document.
+1. First load the PRD template with `fabric-poc prompt get prd-template` and use that template structure for the generated document.
 <!-- /append -->
 
 <!-- append "generate_produce_draft" -->

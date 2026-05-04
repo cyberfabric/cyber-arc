@@ -218,7 +218,7 @@ module.exports = {
       "Validates required fields (number, total_phases, title, slug, phase_file, brief_file) and that phase_file / brief_file follow the canonical phase-{NN}-{slug}.md / brief-{NN}-{slug}.md naming.",
       "Renders Phase Metadata, Load Instructions, Phase File Structure (canonical heading list), Rules To Inline, User Decisions To Embed (or 'none'), and the Acceptance Criteria checklist.",
     ],
-    usage: ["fabric script run plan-brief-write --output <path> ( --spec '<json>' | --spec-file <path> ) [--dry-run]"],
+    usage: ["fabric-poc script run plan-brief-write --output <path> ( --spec '<json>' | --spec-file <path> ) [--dry-run]"],
     parameters: [
       { name: "--output", type: "string", required: true, description: "Path to write brief-{NN}-{slug}.md. Parent directory must already exist." },
       { name: "--spec", type: "string", required: false, description: "Inline JSON spec. Mutually exclusive with --spec-file." },
@@ -227,7 +227,7 @@ module.exports = {
     ],
     returns: "JSON object with output, dry_run, wrote, bytes, and markdown (the rendered brief markdown).",
     examples: [
-      { command: "fabric script run plan-brief-write --output ./.fabric-plans/x/brief-01-overview.md --spec-file ./brief-01.json", description: "Write a brief from a JSON spec file." },
+      { command: "fabric-poc script run plan-brief-write --output ./.fabric-plans/x/brief-01-overview.md --spec-file ./brief-01.json", description: "Write a brief from a JSON spec file." },
     ],
     notes: [
       "Writes only the path passed as --output; throws if the parent directory does not exist (the planner is responsible for creating plan_dir before writing briefs).",

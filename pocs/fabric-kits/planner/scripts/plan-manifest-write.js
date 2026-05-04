@@ -341,10 +341,10 @@ module.exports = {
     details: [
       "Validates the JSON spec against the plan / phase schema (required fields, enum values, kebab-case ids, file-name conventions, depends_on monotonicity, integration-entry shape) and either writes plan.toml or returns the rendered TOML in dry-run.",
       "Phase entries support skills_loaded[] and subagents_dispatched[] arrays so per-phase integration choices recorded by planner-brainstorm round-trip into the manifest verbatim.",
-      "TOML emission uses @iarna/toml (declared as a kit dependency in package.json and installed by `fabric register`); entries are written in the canonical key order (no alphabetic re-sort) so reviewers can diff manifests deterministically against the spec.",
+      "TOML emission uses @iarna/toml (declared as a kit dependency in package.json and installed by `fabric-poc register`); entries are written in the canonical key order (no alphabetic re-sort) so reviewers can diff manifests deterministically against the spec.",
     ],
     usage: [
-      "fabric script run plan-manifest-write --output <path-to-plan.toml> ( --spec '<json>' | --spec-file <path> ) [--dry-run]",
+      "fabric-poc script run plan-manifest-write --output <path-to-plan.toml> ( --spec '<json>' | --spec-file <path> ) [--dry-run]",
     ],
     parameters: [
       { name: "--output", type: "string", required: true, description: "Path to write plan.toml. Filename must be plan.toml; parent directory must already exist." },
@@ -355,11 +355,11 @@ module.exports = {
     returns: "JSON object with output, dry_run, wrote, total_phases, bytes, and toml (the rendered TOML text).",
     examples: [
       {
-        command: "fabric script run plan-manifest-write --output ./.fabric-plans/generate-prd-myapp/plan.toml --spec-file ./plan-spec.json",
+        command: "fabric-poc script run plan-manifest-write --output ./.fabric-plans/generate-prd-myapp/plan.toml --spec-file ./plan-spec.json",
         description: "Write plan.toml from a JSON spec stored next to the planner invocation.",
       },
       {
-        command: "fabric script run plan-manifest-write --output ./.fabric-plans/generate-prd-myapp/plan.toml --spec-file ./plan-spec.json --dry-run",
+        command: "fabric-poc script run plan-manifest-write --output ./.fabric-plans/generate-prd-myapp/plan.toml --spec-file ./plan-spec.json --dry-run",
         description: "Render TOML without writing; useful to compare against an existing manifest before overwriting.",
       },
     ],

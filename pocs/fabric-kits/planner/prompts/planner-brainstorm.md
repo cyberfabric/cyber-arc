@@ -8,7 +8,7 @@ description: Decide task type, lifecycle, decomposition, skill/sub-agent integra
 <!-- append "planner_brainstorm_input" -->
 Use the user's planning request as the routing input. Expect a task description plus optional file references (raw input). The goal of this mode is to reach a locked decomposition spec — JSON describing the plan and every phase, ready to feed into `planner-generate`. NO `plan.toml` / brief / phase files are written in this mode.
 
-Companion rules to load: `fabric prompt get plan-decomposition` (always), `fabric prompt get planner-subagent-protocol` (when sub-agent integration is being decided).
+Companion rules to load: `fabric-poc prompt get plan-decomposition` (always), `fabric-poc prompt get planner-subagent-protocol` (when sub-agent integration is being decided).
 
 Default storage: `{project_root}/.fabric-plans/{task-slug}/`. The project root is the nearest enclosing git root (fall back to `process.cwd()`).
 <!-- /append -->
@@ -26,7 +26,7 @@ Default storage: `{project_root}/.fabric-plans/{task-slug}/`. The project root i
      [3] archive — move to .fabric-plans/.archive/ when done.
      [4] manual — stop after execution and ask what to do with plan files.
    ```
-4. Run `fabric script run plan-init --task "..." --type ... --target-form ... --target ... [--target-kind ...] [--raw-input ...]... [--include-stdin] [--stdin-text "..."]` and capture: `task_slug`, `target_key`, `input_signature`, `plan_dir`, `needs_chunking`, `existing_plan_match`.
+4. Run `fabric-poc script run plan-init --task "..." --type ... --target-form ... --target ... [--target-kind ...] [--raw-input ...]... [--include-stdin] [--stdin-text "..."]` and capture: `task_slug`, `target_key`, `input_signature`, `plan_dir`, `needs_chunking`, `existing_plan_match`.
 5. If `existing_plan_match = true`, ask whether to reuse the existing plan directory or replace it. Replacement requires the user's explicit confirmation; default is reuse.
 <!-- /append -->
 
@@ -40,7 +40,7 @@ Default storage: `{project_root}/.fabric-plans/{task-slug}/`. The project root i
      [y] run plan-chunk-input and stage chunks + manifest.json
      [n] cancel — plan generation aborts (raw input cannot be passed inline)
    ```
-3. On `y`, run `fabric script run plan-chunk-input --output-dir {plan_dir}/input --raw-input ... [--include-stdin --stdin-text "..."] --max-lines 300`. Capture `input_signature` (must match plan-init's), `chunks[]`, `sources[]`. Add `input_chunks = [chunk paths]`, `input_dir`, `input_manifest`, `input_signature` to the decomposition spec.
+3. On `y`, run `fabric-poc script run plan-chunk-input --output-dir {plan_dir}/input --raw-input ... [--include-stdin --stdin-text "..."] --max-lines 300`. Capture `input_signature` (must match plan-init's), `chunks[]`, `sources[]`. Add `input_chunks = [chunk paths]`, `input_dir`, `input_manifest`, `input_signature` to the decomposition spec.
 4. On `n`, stop and report `Plan brainstorm cancelled — raw input not materialized.`
 <!-- /append -->
 
@@ -64,8 +64,8 @@ Produce a phase list with: `number`, `title`, `slug`, `kind` (`delivery` / `life
 
 1. Invoke the `fabric-observer` skill (or your platform's equivalent) ONCE to enumerate skills and sub-agents available in this session. Capture their names and one-line descriptions. The planner kit ships its own `fabric-planner-agent` (modes: `compile` / `execute` / `audit` / `rebuild-brief`) — it should appear in the discovery output when the kit is registered, and it is the default delegate for compile + execute work unless the user picks a more specialized sub-agent for a phase.
 2. For each candidate phase from Phase 2, scan the skill / sub-agent inventory for plausible matches against that phase's work. Group candidates by role:
-   - **load-as-companion**: rules / methodology to inline at runtime (`prompt-engineering`, `prd-template`, `script-engineering`, etc.). The companion's body is loaded via `fabric prompt get {id}` inside the phase file's `Load` section.
-   - **invoke-as-tool**: a skill / fabric script the phase calls for deterministic transformations (`prompt-scaffold`, `script-scaffold`).
+   - **load-as-companion**: rules / methodology to inline at runtime (`prompt-engineering`, `prd-template`, `script-engineering`, etc.). The companion's body is loaded via `fabric-poc prompt get {id}` inside the phase file's `Load` section.
+   - **invoke-as-tool**: a skill / fabric-poc script the phase calls for deterministic transformations (`prompt-scaffold`, `script-scaffold`).
    - **delegate-as-subagent**: a sub-agent the phase dispatches per `planner-subagent-protocol` (Claude Code Task tool, `Explore`, `code-review`, etc.).
 3. Present each phase's candidates to the user with the recommended pick:
    ```
@@ -159,5 +159,5 @@ On `y`, hand off to `planner-generate` (the user re-invokes the planner with the
 **Execution path constraints.**
 
 - The planner's only execution paths are sub-agent dispatch (per `planner-subagent-protocol`) and inline. Do NOT propose ralphex / external delegators in `subagents_dispatched`. If a future delegator is added, it will be a new entry in `planner-execute`'s dispatch table, not a per-phase configuration here.
-- Do NOT silently inline a script's logic into a phase's Task section when a fabric script already exists. Reference the script via `fabric script run <id>` and let the runtime invoke it deterministically.
+- Do NOT silently inline a script's logic into a phase's Task section when a fabric-poc script already exists. Reference the script via `fabric-poc script run <id>` and let the runtime invoke it deterministically.
 <!-- /append -->

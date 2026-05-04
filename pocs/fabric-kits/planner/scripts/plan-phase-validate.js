@@ -135,14 +135,14 @@ module.exports = {
       "2) unresolved_placeholders: regex-matches {placeholder} tokens outside fenced ```code``` blocks. Inside-fence placeholders are intentional examples and PASS.",
       "3) required_headings: the phase file MUST have these H2 headings in this order — Context Boundary, Phase Metadata, Load, Dispatch, Task, Rules, User Decisions, Output Format, Acceptance Criteria, Handoff.",
     ],
-    usage: ["fabric script run plan-phase-validate <phase_file> <brief_file>"],
+    usage: ["fabric-poc script run plan-phase-validate <phase_file> <brief_file>"],
     parameters: [
       { name: "phase_file", type: "string", required: true, description: "Absolute or cwd-relative path to phase-{NN}-{slug}.md." },
       { name: "brief_file", type: "string", required: true, description: "Absolute or cwd-relative path to the corresponding brief-{NN}-{slug}.md (presence check only in this version)." },
     ],
     returns: "JSON object with phase_file, brief_file, phase_file_lines, categories {line_budget, unresolved_placeholders, required_headings}, and overall PASS/FAIL.",
     examples: [
-      { command: "fabric script run plan-phase-validate ./.fabric-plans/x/phase-01-overview.md ./.fabric-plans/x/brief-01-overview.md", description: "Validate a compiled phase file against its brief." },
+      { command: "fabric-poc script run plan-phase-validate ./.fabric-plans/x/phase-01-overview.md ./.fabric-plans/x/brief-01-overview.md", description: "Validate a compiled phase file against its brief." },
     ],
     notes: [
       "Read-only. Does not modify either file.",

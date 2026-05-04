@@ -42,7 +42,7 @@ The sub-agent MUST return a single structured payload (typically JSON or a stric
 | `phase_file_path` | yes | Absolute path of the phase file the sub-agent wrote (for compilation) or the phase file it consumed (for execution). |
 | `intermediate_outputs` | yes | List of `out/{filename}` paths under `plan_dir` that the sub-agent created. Empty array if none. |
 | `output_files` | yes | List of project-side files the sub-agent created or modified. Empty array if none. |
-| `validation_outcome` | yes | `"PASS"` or `"FAIL"`. The sub-agent MUST run `fabric script run plan-phase-validate <phase_file> <brief_file>` (compilation) or it MUST run the phase's Acceptance Criteria checks (execution) before returning. |
+| `validation_outcome` | yes | `"PASS"` or `"FAIL"`. The sub-agent MUST run `fabric-poc script run plan-phase-validate <phase_file> <brief_file>` (compilation) or it MUST run the phase's Acceptance Criteria checks (execution) before returning. |
 | `validation_findings` | optional | When `validation_outcome = "FAIL"`, a structured list of failing categories. |
 | `notes` | optional | Free-text observations the parent may surface to the user. |
 

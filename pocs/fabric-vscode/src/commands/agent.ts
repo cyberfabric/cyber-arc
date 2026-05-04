@@ -30,10 +30,10 @@ async function pickAgents(
 async function pickScope(): Promise<{ local: boolean; includeGlobal: boolean; label: RegisterScope } | undefined> {
   const picked = await vscode.window.showQuickPick(
     [
-      { label: 'Default',          description: 'fabric register (no flags)',             local: false, includeGlobal: false, scope: 'default' as RegisterScope },
-      { label: 'Project',          description: 'fabric register --local',                local: true,  includeGlobal: false, scope: 'project' as RegisterScope },
-      { label: 'Global',           description: 'fabric register --include-global',       local: false, includeGlobal: true,  scope: 'global' as RegisterScope },
-      { label: 'Project + Global', description: 'fabric register --local --include-global', local: true, includeGlobal: true,  scope: 'project+global' as RegisterScope },
+      { label: 'Default',          description: 'fabric-poc register (no flags)',             local: false, includeGlobal: false, scope: 'default' as RegisterScope },
+      { label: 'Project',          description: 'fabric-poc register --local',                local: true,  includeGlobal: false, scope: 'project' as RegisterScope },
+      { label: 'Global',           description: 'fabric-poc register --include-global',       local: false, includeGlobal: true,  scope: 'global' as RegisterScope },
+      { label: 'Project + Global', description: 'fabric-poc register --local --include-global', local: true, includeGlobal: true,  scope: 'project+global' as RegisterScope },
     ],
     { placeHolder: 'Registration scope', ignoreFocusOut: true },
   );

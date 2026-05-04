@@ -2,11 +2,11 @@
 id: prompt-repair
 type: rules
 name: prompt repair
-description: Repair an existing fabric prompt file against type conventions, marker syntax, determinism expectations, and review findings
+description: Repair an existing fabric-poc prompt file against type conventions, marker syntax, determinism expectations, and review findings
 ---
 
 <!-- append "repair_intro" -->
-Use fabric prompt repair mode. This mode applies fixes to an existing prompt file against explicit findings (from `prompt-review`, `prompt-lint`, `prompt-kit-lint`) or against the type / determinism / router contracts the file is expected to satisfy.
+Use fabric-poc prompt repair mode. This mode applies fixes to an existing prompt file against explicit findings (from `prompt-review`, `prompt-lint`, `prompt-kit-lint`) or against the type / determinism / router contracts the file is expected to satisfy.
 <!-- /append -->
 
 <!-- append "repair_goal" -->
@@ -19,16 +19,16 @@ Use fabric prompt repair mode. This mode applies fixes to an existing prompt fil
    - a path to a prompt file alone, when the repair brief is explicit in the user's request
    - a kit directory when the repair is cross-file (id collision, orphan middleware target, broken router-mode symmetry)
    If the user has not supplied findings, run the deterministic scripts first so every repair is anchored to concrete evidence:
-   - `fabric script run prompt-lint <path>`
-   - `fabric script run prompt-register-dryrun <path>`
-   - `fabric script run prompt-kit-lint <kit-dir>` when the issue is cross-file
+   - `fabric-poc script run prompt-lint <path>`
+   - `fabric-poc script run prompt-register-dryrun <path>`
+   - `fabric-poc script run prompt-kit-lint <kit-dir>` when the issue is cross-file
 <!-- /append -->
 
 <!-- append "repair_priority" -->
 3. Apply fixes in this order:
    - CRITICAL deterministic findings first: restore missing required frontmatter, rebalance markers, correct invalid `type`, ensure the file is covered by an active `prompt_files` glob
-   - HIGH findings next: non-kebab-case id, unresolved `insert` anchors, duplicate block ids, middleware field errors, broken `fabric prompt get` / `fabric script run` references, routing logic leaking into a `rules` file
-   - MEDIUM findings: determinism-boundary violations (move deterministic logic into a fabric script via `fabric script run <id>`), logic duplicated across mode files, content that belongs in a different prompt or script
+   - HIGH findings next: non-kebab-case id, unresolved `insert` anchors, duplicate block ids, middleware field errors, broken `fabric-poc prompt get` / `fabric-poc script run` references, routing logic leaking into a `rules` file
+   - MEDIUM findings: determinism-boundary violations (move deterministic logic into a fabric-poc script via `fabric-poc script run <id>`), logic duplicated across mode files, content that belongs in a different prompt or script
    - LOW findings: wording, description clarity, authoring hygiene
 <!-- /append -->
 
@@ -43,22 +43,22 @@ Use fabric prompt repair mode. This mode applies fixes to an existing prompt fil
 
 <!-- append "repair_delegation" -->
 5. Delegate structural work to the existing authoring scripts instead of hand-writing frontmatter or marker syntax:
-   - use `fabric script run prompt-scaffold ...` when a missing file needs to be reconstructed from its frontmatter signature
-   - when extracting deterministic behavior into a script, stop and delegate to prompt-script mode (`fabric prompt get prompt-script`) to author the script; do not inline the script body in the repair output
+   - use `fabric-poc script run prompt-scaffold ...` when a missing file needs to be reconstructed from its frontmatter signature
+   - when extracting deterministic behavior into a script, stop and delegate to prompt-script mode (`fabric-poc prompt get prompt-script`) to author the script; do not inline the script body in the repair output
 <!-- /append -->
 
 <!-- append "repair_router_pattern" -->
 6. When repairing a router or its modes, keep the pattern intact:
-   - the router `skill` only selects a mode and defers to `fabric prompt get <router>-<mode>`
+   - the router `skill` only selects a mode and defers to `fabric-poc prompt get <router>-<mode>`
    - each mode file is a `rules` prompt with id `<router>-<mode>` and contains no routing logic
    - if a repair introduces or removes a mode, update both the router's dispatch table and the mode files in the same repair pass so the kit remains symmetric (`prompt-kit-lint` will catch drift)
 <!-- /append -->
 
 <!-- append "repair_verify" -->
 7. Verify deterministically before returning:
-   - rerun `fabric script run prompt-lint <path>` and confirm `findings` is empty
-   - rerun `fabric script run prompt-register-dryrun <path>` and confirm `covered` is `true`
-   - rerun `fabric script run prompt-kit-lint <kit-dir>` when the repair was cross-file
+   - rerun `fabric-poc script run prompt-lint <path>` and confirm `findings` is empty
+   - rerun `fabric-poc script run prompt-register-dryrun <path>` and confirm `covered` is `true`
+   - rerun `fabric-poc script run prompt-kit-lint <kit-dir>` when the repair was cross-file
    - if any CRITICAL or HIGH finding still appears, loop back to step 3 before producing the final output
 <!-- /append -->
 

@@ -21,23 +21,23 @@ const { runWebServer } = require("../src/web-server");
 const { callApi, getApiHelp, listActiveApiMetadata, getApiDefinition } = require("../src/apis");
 
 function printUsage() {
-  process.stderr.write("Usage: fabric prompt get <name>\n");
-  process.stderr.write("   or: fabric prompt source <name>\n");
-  process.stderr.write("   or: fabric prompt help <name>\n");
-  process.stderr.write("   or: fabric prompt list [--verbose]\n");
-  process.stderr.write("   or: fabric prompt types [--verbose]\n");
-  process.stderr.write("   or: fabric delegate <claude|codex> <prompt>\n");
-  process.stderr.write("   or: fabric prompt delegate <claude|codex> <name>\n");
-  process.stderr.write("   or: fabric script run <id> [parameters...]\n");
-  process.stderr.write("   or: fabric script help <id>\n");
-  process.stderr.write("   or: fabric script list [--verbose]\n");
-  process.stderr.write("   or: fabric api call <service> [-X METHOD] <path> [-H 'Name: Value']... [-d BODY | --json JSON]\n");
-  process.stderr.write("   or: fabric api list [--verbose]\n");
-  process.stderr.write("   or: fabric api help <service>\n");
-  process.stderr.write("   or: fabric register [path] [--local] [--include-global] [--no-install | --reinstall]\n");
-  process.stderr.write("   or: fabric kit install <path> [--no-install | --reinstall]\n");
-  process.stderr.write("   or: fabric init\n");
-  process.stderr.write("   or: fabric web run [--port <port>]\n");
+  process.stderr.write("Usage: fabric-poc prompt get <name>\n");
+  process.stderr.write("   or: fabric-poc prompt source <name>\n");
+  process.stderr.write("   or: fabric-poc prompt help <name>\n");
+  process.stderr.write("   or: fabric-poc prompt list [--verbose]\n");
+  process.stderr.write("   or: fabric-poc prompt types [--verbose]\n");
+  process.stderr.write("   or: fabric-poc delegate <claude|codex> <prompt>\n");
+  process.stderr.write("   or: fabric-poc prompt delegate <claude|codex> <name>\n");
+  process.stderr.write("   or: fabric-poc script run <id> [parameters...]\n");
+  process.stderr.write("   or: fabric-poc script help <id>\n");
+  process.stderr.write("   or: fabric-poc script list [--verbose]\n");
+  process.stderr.write("   or: fabric-poc api call <service> [-X METHOD] <path> [-H 'Name: Value']... [-d BODY | --json JSON]\n");
+  process.stderr.write("   or: fabric-poc api list [--verbose]\n");
+  process.stderr.write("   or: fabric-poc api help <service>\n");
+  process.stderr.write("   or: fabric-poc register [path] [--local] [--include-global] [--no-install | --reinstall]\n");
+  process.stderr.write("   or: fabric-poc kit install <path> [--no-install | --reinstall]\n");
+  process.stderr.write("   or: fabric-poc init\n");
+  process.stderr.write("   or: fabric-poc web run [--port <port>]\n");
 }
 
 function writeResult(value) {
@@ -538,7 +538,7 @@ async function main(argv) {
   if (group === "kit" && action === "install") {
     const parsed = parseKitInstallArguments(rest);
     if (!parsed) {
-      process.stderr.write("Usage: fabric kit install <path> [--no-install | --reinstall]\n");
+      process.stderr.write("Usage: fabric-poc kit install <path> [--no-install | --reinstall]\n");
       return 1;
     }
     try {

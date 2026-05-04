@@ -20,10 +20,10 @@ interface ScopeOption {
 }
 
 const SCOPES: ScopeOption[] = [
-  { label: 'Default',          description: 'fabric register (no flags)',               local: false, includeGlobal: false, scope: 'default' },
-  { label: 'Project',          description: 'fabric register --local',                  local: true,  includeGlobal: false, scope: 'project' },
-  { label: 'Global',           description: 'fabric register --include-global',         local: false, includeGlobal: true,  scope: 'global' },
-  { label: 'Project + Global', description: 'fabric register --local --include-global', local: true,  includeGlobal: true,  scope: 'project+global' },
+  { label: 'Default',          description: 'fabric-poc register (no flags)',               local: false, includeGlobal: false, scope: 'default' },
+  { label: 'Project',          description: 'fabric-poc register --local',                  local: true,  includeGlobal: false, scope: 'project' },
+  { label: 'Global',           description: 'fabric-poc register --include-global',         local: false, includeGlobal: true,  scope: 'global' },
+  { label: 'Project + Global', description: 'fabric-poc register --local --include-global', local: true,  includeGlobal: true,  scope: 'project+global' },
 ];
 
 export default function RegisterAgentsDialog({ mode, onClose }: Props): JSX.Element {

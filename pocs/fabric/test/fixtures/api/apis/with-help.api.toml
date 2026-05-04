@@ -7,5 +7,5 @@ base_url = "http://MOCK_SERVER_URL_PLACEHOLDER"
 # <!-- help -->
 # ## Usage
 #
-# Run `fabric api call with-help /ping` to hit the echo server.
+# Run `fabric-poc api call with-help /ping` to hit the echo server.
 # <!-- /help -->

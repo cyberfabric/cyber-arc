@@ -8,16 +8,16 @@ description: Load the next executable phase from an existing plan.toml, dispatch
 <!-- append "planner_execute_input" -->
 Use the user's request as the routing input. Expect a path to an existing plan directory whose `plan.toml` is valid (use `planner-review` first if the plan was hand-edited). The runner advances exactly one phase per invocation.
 
-Companion rules to load: `fabric prompt get planner-subagent-protocol` (always — the protocol governs both dispatch and inline post-validation).
+Companion rules to load: `fabric-poc prompt get planner-subagent-protocol` (always — the protocol governs both dispatch and inline post-validation).
 <!-- /append -->
 
 <!-- append "planner_execute_load_next_phase" -->
-1. Run `fabric script run plan-status <plan_dir>`. Read `next_executable` from the JSON.
+1. Run `fabric-poc script run plan-status <plan_dir>`. Read `next_executable` from the JSON.
 2. If `next_executable` is null:
    - If `phase_summary.done = total_phases`, jump to the final-phase / lifecycle handling section (`planner_execute_final_phase_lifecycle`).
    - Otherwise the plan is blocked (failed phase, dependency chain broken, lifecycle mis-set). Stop and recommend `planner-recover` to audit and repair. Do NOT advance.
 3. Otherwise read the phase file from disk at `{plan_dir}/{next_executable.file}` (resolve `file` from the `plan-status` `phases[]` entry whose `number` matches). Read the corresponding brief at `{plan_dir}/{next_executable.brief_file}`.
-4. Re-run `fabric script run plan-phase-validate <phase_file> <brief_file>` and confirm `overall = "PASS"` before proceeding. If FAIL, stop and recommend rebuilding this phase via `planner-generate` (or hand-editing followed by `planner-review`).
+4. Re-run `fabric-poc script run plan-phase-validate <phase_file> <brief_file>` and confirm `overall = "PASS"` before proceeding. If FAIL, stop and recommend rebuilding this phase via `planner-generate` (or hand-editing followed by `planner-review`).
 5. Update the phase status in `plan.toml` to `in_progress` and recompute `plan.execution_status`. Use TOML round-trip via `@iarna/toml` (parse → mutate → stringify) — do NOT hand-edit the manifest.
 <!-- /append -->
 
@@ -34,9 +34,9 @@ Decide dispatch path per the phase's `subagents_dispatched` field in the manifes
 **If `subagents_dispatched` is empty (inline or default-agent fallback)**:
 - **Preferred fallback** when `fabric-planner-agent` is registered: dispatch to it with payload `mode: execute, plan_dir: <abs>, phase_number: <N>, phase_file: <name>` so the phase runs in an isolated context with the canonical `planner-agent-execute` discipline. This is materially safer than inline for non-trivial phases since it enforces the Context Boundary by construction.
 - **Inline** when no agent infrastructure is available, or when the phase is trivial enough that the isolation overhead is wasted:
-  - Load every entry in `skills_loaded` (`role = companion`) via `fabric prompt get {id}`.
+  - Load every entry in `skills_loaded` (`role = companion`) via `fabric-poc prompt get {id}`.
   - Read every file listed in `input_files` and `inputs` and retain only the section ranges named in the brief.
-  - Follow the phase file's `Task` section step by step. For every step that maps to a fabric script, invoke it. For every step that requires judgment, apply the loaded companion methodology.
+  - Follow the phase file's `Task` section step by step. For every step that maps to a fabric-poc script, invoke it. For every step that requires judgment, apply the loaded companion methodology.
   - After producing the declared `output_files` and `outputs`, verify each artifact exists on disk before claiming success — same Acceptance Criteria as the dispatch path.
 
 **No third execution path**: the planner does NOT delegate to ralphex or any external runner. The dispatch / inline paths above are the entire surface.

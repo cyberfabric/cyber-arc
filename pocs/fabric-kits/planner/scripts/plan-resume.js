@@ -192,15 +192,15 @@ module.exports = {
       "Exempts brief / phase / out file absences when lifecycle=cleanup and lifecycle_status=done — those deletions are intentional terminal cleanup, not regressions.",
       "By default, does not mutate plan.toml. Pass --apply to rewrite plan.toml with downgraded statuses and recomputed execution_status / lifecycle_status.",
     ],
-    usage: ["fabric script run plan-resume <plan_dir> [--apply]"],
+    usage: ["fabric-poc script run plan-resume <plan_dir> [--apply]"],
     parameters: [
       { name: "plan_dir", type: "string", required: true, description: "Absolute or cwd-relative path to a plan directory containing plan.toml." },
       { name: "--apply", type: "boolean", required: false, description: "Rewrite plan.toml in place with the recommended downgrades and lifecycle repair. Without this flag the script is read-only." },
     ],
     returns: "JSON object with plan_dir, manifest_path, cleanup_exempt, audit_findings[] {phase,issue,path}, phases_to_reopen[], lifecycle_repair {from,to,reason} or null, execution_status, next_executable {number,slug,reason} or null, and applied.",
     examples: [
-      { command: "fabric script run plan-resume ./.fabric-plans/generate-prd-myapp", description: "Audit the plan and report findings without mutating anything." },
-      { command: "fabric script run plan-resume ./.fabric-plans/generate-prd-myapp --apply", description: "Audit and rewrite plan.toml with reopened phases + lifecycle repair." },
+      { command: "fabric-poc script run plan-resume ./.fabric-plans/generate-prd-myapp", description: "Audit the plan and report findings without mutating anything." },
+      { command: "fabric-poc script run plan-resume ./.fabric-plans/generate-prd-myapp --apply", description: "Audit and rewrite plan.toml with reopened phases + lifecycle repair." },
     ],
     notes: [
       "Only audits artifacts under plan_dir (briefs, phase files, intermediate outputs). Project-side output_files are out of scope; use plan-lint for cross-cutting plan validation.",

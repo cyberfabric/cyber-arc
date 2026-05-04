@@ -209,13 +209,13 @@ module.exports = {
       "5) budget: every present phase file is ≤ 1000 lines.",
       "Per-phase content checks (headings, unresolved placeholders) are out of scope here — use plan-phase-validate for those.",
     ],
-    usage: ["fabric script run plan-lint <plan_dir>"],
+    usage: ["fabric-poc script run plan-lint <plan_dir>"],
     parameters: [
       { name: "plan_dir", type: "string", required: true, description: "Absolute or cwd-relative path to a plan directory containing plan.toml." },
     ],
     returns: "JSON object with plan_dir, manifest_path, categories {manifest_schema, lifecycle, structural, file_presence, budget}, and overall PASS/FAIL.",
     examples: [
-      { command: "fabric script run plan-lint ./.fabric-plans/generate-prd-myapp", description: "Audit an existing plan directory across all five categories." },
+      { command: "fabric-poc script run plan-lint ./.fabric-plans/generate-prd-myapp", description: "Audit an existing plan directory across all five categories." },
     ],
     notes: [
       "Read-only. Does not modify plan.toml or phase / brief files.",

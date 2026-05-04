@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "type": "module",
-  "description": "Fabric web UI (served by `fabric web run`)",
+  "description": "Fabric web UI (served by `fabric-poc web run`)",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

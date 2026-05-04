@@ -14,11 +14,11 @@ description: Mode rules loaded by planner-agent when mode=audit — run plan-lin
 <!-- /append -->
 
 <!-- append "planner_agent_audit_run_deterministic" -->
-1. Run `fabric script run plan-lint {plan_dir}`. Capture the JSON: it covers categories 1 (structural), 5 (phase independence — partial), 6 (budget), 7 (lifecycle).
+1. Run `fabric-poc script run plan-lint {plan_dir}`. Capture the JSON: it covers categories 1 (structural), 5 (phase independence — partial), 6 (budget), 7 (lifecycle).
 2. For each phase listed in the manifest:
-   - Run `fabric script run plan-phase-validate {plan_dir}/{phases[i].file} {plan_dir}/{phases[i].brief_file}`.
+   - Run `fabric-poc script run plan-phase-validate {plan_dir}/{phases[i].file} {plan_dir}/{phases[i].brief_file}`.
    - Capture per-phase JSON; aggregate into category 5 (heading set + order, unresolved placeholders, line budget).
-3. Load `fabric prompt get plan-checklist` for the 7-category specification.
+3. Load `fabric-poc prompt get plan-checklist` for the 7-category specification.
 <!-- /append -->
 
 <!-- append "planner_agent_audit_run_judgment" -->
@@ -56,5 +56,5 @@ Compose the audit report:
 
 `validation_outcome` is `PASS` only when every category PASSes. A single FAIL anywhere → overall FAIL. Each finding under `items[]` MUST name the affected phase or file path and be specific enough that a reviewer can act on it without re-running the audit.
 
-Read-only enforcement: this mode MUST NOT write any file under `plan_dir`. If you observe yourself drafting a write (`fs.writeFile`, `fabric script run plan-manifest-write` with non-`--dry-run`, etc.), stop and return FAIL with `notes: "audit mode attempted a write — bug in the loaded mode rules"`.
+Read-only enforcement: this mode MUST NOT write any file under `plan_dir`. If you observe yourself drafting a write (`fs.writeFile`, `fabric-poc script run plan-manifest-write` with non-`--dry-run`, etc.), stop and return FAIL with `notes: "audit mode attempted a write — bug in the loaded mode rules"`.
 <!-- /append -->

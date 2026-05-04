@@ -210,8 +210,8 @@ function lintTodoMarkers(body, bodyStartLine, findings) {
 
 function lintBrokenRefs(body, bodyStartLine, findings) {
   const patterns = [
-    { regex: PROMPT_GET_BROAD, verb: "fabric prompt get", kind: "prompt" },
-    { regex: SCRIPT_RUN_BROAD, verb: "fabric script run", kind: "script" },
+    { regex: PROMPT_GET_BROAD, verb: "fabric-poc prompt get", kind: "prompt" },
+    { regex: SCRIPT_RUN_BROAD, verb: "fabric-poc script run", kind: "script" },
   ];
   for (const { regex, verb, kind } of patterns) {
     regex.lastIndex = 0;
@@ -232,15 +232,15 @@ function lintBrokenRefs(body, bodyStartLine, findings) {
 module.exports = {
   id: "prompt-lint",
   name: "prompt lint",
-  description: "Deterministically lint a fabric prompt file for frontmatter and marker syntax issues",
+  description: "Deterministically lint a fabric-poc prompt file for frontmatter and marker syntax issues",
   interface: {
     details: [
-      "Reads a fabric prompt file from disk and reports frontmatter, type, kebab-case id, middleware field, marker balance, insert-anchor, and unique-id findings.",
-      "Also flags empty append/insert/replace blocks (MEDIUM), leftover 'TODO:' placeholders at line start (LOW), and malformed non-kebab-case ids in 'fabric prompt get <id>' / 'fabric script run <id>' body references (HIGH).",
+      "Reads a fabric-poc prompt file from disk and reports frontmatter, type, kebab-case id, middleware field, marker balance, insert-anchor, and unique-id findings.",
+      "Also flags empty append/insert/replace blocks (MEDIUM), leftover 'TODO:' placeholders at line start (LOW), and malformed non-kebab-case ids in 'fabric-poc prompt get <id>' / 'fabric-poc script run <id>' body references (HIGH).",
       "Does not check type-fit, routing logic, registration-glob coverage, or cross-file id existence — those belong in prompt-review (judgment), prompt-register-dryrun (coverage), and prompt-kit-lint (cross-file).",
     ],
     usage: [
-      "fabric script run prompt-lint <path-to-prompt.md>",
+      "fabric-poc script run prompt-lint <path-to-prompt.md>",
     ],
     parameters: [
       { name: "path", type: "string", required: true, description: "Absolute or cwd-relative path to the prompt file to lint." },
@@ -248,7 +248,7 @@ module.exports = {
     returns: "JSON-formatted array of findings; each finding has severity, where, and problem fields. Empty array means the file passed the deterministic checks.",
     examples: [
       {
-        command: "fabric script run prompt-lint pocs/fabric-kits/prompting/prompts/prompt.md",
+        command: "fabric-poc script run prompt-lint pocs/fabric-kits/prompting/prompts/prompt.md",
         description: "Lint the prompt router.",
       },
     ],

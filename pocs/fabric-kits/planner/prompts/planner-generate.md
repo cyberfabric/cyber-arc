@@ -8,7 +8,7 @@ description: Compile plan.toml, all brief-{NN}-{slug}.md files, and all phase-{N
 <!-- append "planner_generate_input" -->
 Use the locked decomposition spec from `planner-brainstorm` as the input. The spec is JSON with `plan` and `phases[]`. If the user did not run brainstorm first or the spec is incomplete, stop and direct them to `planner-brainstorm`.
 
-Companion rules to load: `fabric prompt get plan-decomposition` (for budget / boundary validation), `fabric prompt get planner-subagent-protocol` (governs the dispatch path used to compile phase files).
+Companion rules to load: `fabric-poc prompt get plan-decomposition` (for budget / boundary validation), `fabric-poc prompt get planner-subagent-protocol` (governs the dispatch path used to compile phase files).
 
 This mode writes `plan.toml`, every `brief-*.md`, and every `phase-*.md` under `{plan_dir}`. It does NOT execute phases — that is `planner-execute`.
 <!-- /append -->
@@ -29,14 +29,14 @@ This mode writes `plan.toml`, every `brief-*.md`, and every `phase-*.md` under `
 1. `mkdir -p {plan_dir}` (and `{plan_dir}/out/` for intermediate outputs).
 2. If `plan.input_chunks` is non-empty, the chunks were already staged by `planner-brainstorm` via `plan-chunk-input` — confirm `{plan_dir}/input/manifest.json` exists and its `input_signature` matches `plan.input_signature`.
 3. Build the JSON spec for `plan-manifest-write` from the decomposition spec: copy every plan-level field, copy every phase entry verbatim including `skills_loaded[]` and `subagents_dispatched[]`. Add the schema-required fields the brainstorm spec didn't carry: `kit_path` (already present), `created` (current ISO 8601 timestamp), `execution_status = "not_started"`, `lifecycle_status = "pending"` (or `"done"` immediately for `lifecycle = "gitignore"`), `active_plan_dir = plan_dir`, `total_phases = phases.length`, derive `file = phase-{NN}-{slug}.md` and `brief_file = brief-{NN}-{slug}.md` for every phase.
-4. Run `fabric script run plan-manifest-write --output {plan_dir}/plan.toml --spec '<json>'`. Validate the script's `wrote = true`; if it errored, surface the validation message and stop.
+4. Run `fabric-poc script run plan-manifest-write --output {plan_dir}/plan.toml --spec '<json>'`. Validate the script's `wrote = true`; if it errored, surface the validation message and stop.
 5. If `lifecycle = "gitignore"` and the project's `.gitignore` does not yet exclude `.fabric-plans/`, add the line and stage the change.
 <!-- /append -->
 
 <!-- append "planner_generate_step3_write_briefs" -->
 **Step 3 — write briefs.**
 
-For each phase, build the brief JSON spec and call `fabric script run plan-brief-write --output {plan_dir}/brief-{NN}-{slug}.md --spec '<json>'`. The brief spec MUST include:
+For each phase, build the brief JSON spec and call `fabric-poc script run plan-brief-write --output {plan_dir}/brief-{NN}-{slug}.md --spec '<json>'`. The brief spec MUST include:
 
 - `number`, `total_phases`, `title`, `slug`, `phase_file`, `brief_file`, `plan_dir`, `kind`
 - `depends_on`, `inputs`, `output_files`, `outputs`, `template_sections`, `checklist_sections`
@@ -78,14 +78,14 @@ The compilation path depends on the user's choice in Step 3a.
 
 1. Build dependency layers from `phases[].depends_on`: layer 0 = phases with empty `depends_on`; layer N = phases whose `depends_on` are all in layers 0..N-1.
 2. For each layer, dispatch one sub-agent per brief in parallel per `planner-subagent-protocol L2 input contract`. The default compilation sub-agent shipped by this kit is `fabric-planner-agent` with payload `mode: compile, plan_dir: <abs>, phase_number: <N>, brief_file: <name>` — it loads `planner-agent-compile` rules and produces a validated phase file. If `planner-brainstorm` recorded a different sub-agent name in the brief's `subagents_dispatched` for compilation, that pick overrides the default.
-3. Await all returns of the layer per `L3 return contract` and verify each per `L4 parent verification`. Specifically for compilation: re-run `fabric script run plan-phase-validate {phase_file} {brief_file}` and require `overall = "PASS"`.
+3. Await all returns of the layer per `L3 return contract` and verify each per `L4 parent verification`. Specifically for compilation: re-run `fabric-poc script run plan-phase-validate {phase_file} {brief_file}` and require `overall = "PASS"`.
 4. On any verification failure, stop dispatching subsequent layers; surface the failing brief and the validator findings; do NOT mark the affected phase compiled.
 5. After all layers complete, all `phase-*.md` files exist on disk.
 
 **Path 2 — Inline:**
 
 1. For each brief in dependency order, read the brief from disk, apply the context boundary, and compile one phase file in this chat following the brief's `Phase File Structure` and `Rules To Inline` sections.
-2. Run `fabric script run plan-phase-validate {phase_file} {brief_file}` after each compile; require `overall = "PASS"` before continuing.
+2. Run `fabric-poc script run plan-phase-validate {phase_file} {brief_file}` after each compile; require `overall = "PASS"` before continuing.
 
 **Path 3 — Downstream prompts only:**
 
@@ -100,7 +100,7 @@ Report what was written (`plan.toml` + briefs) and stop. The user can re-invoke 
 <!-- append "planner_generate_step5_validate_kit" -->
 **Step 5 — validate the compiled plan (Path 1 / Path 2 only).**
 
-Run `fabric script run plan-lint {plan_dir}` and confirm `overall = "PASS"` across all five categories. If FAIL, report the failing categories and recommend `planner-review` for full seven-category audit.
+Run `fabric-poc script run plan-lint {plan_dir}` and confirm `overall = "PASS"` across all five categories. If FAIL, report the failing categories and recommend `planner-review` for full seven-category audit.
 
 When all phases compiled and `plan-lint` passes:
 ```

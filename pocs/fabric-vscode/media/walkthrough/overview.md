@@ -1,6 +1,6 @@
 # Fabric PoC Walkthrough
 
-This VS Code extension is a UI-only PoC for the fabric agent environment manager.
+This VS Code extension is a UI-only PoC for the fabric-poc agent environment manager.
 
 **What works here:**
 - Add marketplaces (bundled: `cyber-fabric-official`, `community-demo`).

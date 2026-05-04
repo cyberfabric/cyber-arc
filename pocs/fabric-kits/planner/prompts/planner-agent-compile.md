@@ -21,7 +21,7 @@ description: Mode rules loaded by planner-agent when mode=compile — read brief
    - Phase File Structure heading list (the canonical 10 H2 headings)
    - Rules To Inline list (verbatim text to embed under the phase's `Rules` section)
    - User Decisions To Embed list (or "none")
-2. Load `fabric prompt get plan-template` for the canonical phase-file body shape; cite specific block ids (`template_phase_layout`, `template_load_section`, `template_dispatch_section`, `template_field_reference`) — do NOT restate.
+2. Load `fabric-poc prompt get plan-template` for the canonical phase-file body shape; cite specific block ids (`template_phase_layout`, `template_load_section`, `template_dispatch_section`, `template_field_reference`) — do NOT restate.
 3. Load any companion methodologies the brief references through Rules To Inline `source` fields, when they materially shape the phase body (e.g. `prd-template`, `prompt-engineering`).
 <!-- /append -->
 
@@ -34,9 +34,9 @@ Per heading:
 
 - **Context Boundary**: verbatim `Disregard all previous chat context. This phase file is self-contained. Read ONLY the files listed in the Load section below. Follow the Task section exactly.`
 - **Phase Metadata**: render the brief's metadata as a bulleted list per `plan-template template_phase_layout`. Resolve every placeholder (`{N}`, `{slug}`, `{plan_dir}`, etc.) — no `{...}` outside fenced code blocks.
-- **Load**: enumerate the brief's Load Instructions verbatim as numbered steps. Add a `fabric prompt get {id}` line for every `skills_loaded[role=companion]` entry.
+- **Load**: enumerate the brief's Load Instructions verbatim as numbered steps. Add a `fabric-poc prompt get {id}` line for every `skills_loaded[role=companion]` entry.
 - **Dispatch**: per `plan-template template_dispatch_section`, render based on the brief's `subagents_dispatched`. If the list is empty, write `Inline.` and nothing else.
-- **Task**: imperative steps that produce the declared `output_files` and `outputs`. Every step that maps to a fabric script MUST cite `fabric script run <id>`. Steps requiring judgment cite the loaded companion skill that owns that judgment.
+- **Task**: imperative steps that produce the declared `output_files` and `outputs`. Every step that maps to a fabric-poc script MUST cite `fabric-poc script run <id>`. Steps requiring judgment cite the loaded companion skill that owns that judgment.
 - **Rules**: paste every Rules-To-Inline entry verbatim. NEVER summarize, trim, or cherry-pick. If everything does not fit under 1000 phase-file lines, return FAIL with `validation_findings: ["budget exceeds 1000 — split the phase before recompile"]` — do NOT trim rules.
 - **User Decisions**: paste every entry from User Decisions To Embed, or `No phase-bound user decisions.` if empty.
 - **Output Format**: list every `output_files` path and every `outputs` path, plus any inline summary fields the runner must print.
@@ -47,7 +47,7 @@ Per heading:
 <!-- append "planner_agent_compile_validate_and_return" -->
 After writing the phase file:
 
-1. Run `fabric script run plan-phase-validate {plan_dir}/{phase_file} {plan_dir}/{brief_file}`. The script returns JSON with `categories` and `overall`.
+1. Run `fabric-poc script run plan-phase-validate {plan_dir}/{phase_file} {plan_dir}/{brief_file}`. The script returns JSON with `categories` and `overall`.
 2. If `overall = "PASS"`: return success per `planner-subagent-protocol L3`:
    ```json
    {

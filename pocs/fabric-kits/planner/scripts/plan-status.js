@@ -103,13 +103,13 @@ module.exports = {
       "Reads <plan_dir>/plan.toml and returns plan-level metadata, per-phase status summaries, an aggregate phase_summary, and the first ready-to-run phase as next_executable.",
       "next_executable picks the lowest-numbered pending phase whose declared depends_on phases are all done. Returns null when nothing is ready (all done, or every pending phase is blocked by a non-done upstream).",
     ],
-    usage: ["fabric script run plan-status <plan_dir>"],
+    usage: ["fabric-poc script run plan-status <plan_dir>"],
     parameters: [
       { name: "plan_dir", type: "string", required: true, description: "Absolute or cwd-relative path to a plan directory containing plan.toml." },
     ],
     returns: "JSON object with plan_dir, manifest_path, task, type, target, target_key, execution_status, lifecycle, lifecycle_status, active_plan_dir, input_signature, total_phases, phase_summary {pending,in_progress,done,failed}, next_executable {number,slug,reason} or null, and phases[] {number,title,slug,status,kind,depends_on}.",
     examples: [
-      { command: "fabric script run plan-status ./.fabric-plans/generate-prd-myapp", description: "Report status of an existing plan directory." },
+      { command: "fabric-poc script run plan-status ./.fabric-plans/generate-prd-myapp", description: "Report status of an existing plan directory." },
     ],
     notes: [
       "Read-only. Does not modify plan.toml or any phase files.",

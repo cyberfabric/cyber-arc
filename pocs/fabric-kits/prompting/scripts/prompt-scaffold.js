@@ -101,20 +101,20 @@ function buildBlocks(parsed) {
 module.exports = {
   id: "prompt-scaffold",
   name: "prompt scaffold",
-  description: "Emit a valid fabric prompt markdown skeleton for the given frontmatter",
+  description: "Emit a valid fabric-poc prompt markdown skeleton for the given frontmatter",
   interface: {
     details: [
       "Generates a prompt file with correct frontmatter for the declared type and one or more append-block stubs.",
       "Produces no file output — writes the skeleton to stdout so the caller can pipe, save, or paste it.",
     ],
     usage: [
-      "fabric script run prompt-scaffold --id <kebab-id> --type <type> --name <name> --description <description> [--target-types <csv>] [--target-prompts <csv>] [--timing pre|post] [--blocks <csv>]",
+      "fabric-poc script run prompt-scaffold --id <kebab-id> --type <type> --name <name> --description <description> [--target-types <csv>] [--target-prompts <csv>] [--timing pre|post] [--blocks <csv>]",
     ],
     parameters: [
       { name: "--id", type: "string", required: true, description: "Stable kebab-case id for the new prompt." },
       { name: "--type", type: "string", required: true, description: "One of skill, agent, rules, template, middleware, workflow, checklist." },
       { name: "--name", type: "string", required: true, description: "Human-friendly name." },
-      { name: "--description", type: "string", required: true, description: "One-line purpose shown in fabric prompt list." },
+      { name: "--description", type: "string", required: true, description: "One-line purpose shown in fabric-poc prompt list." },
       { name: "--target-types", type: "string", required: false, description: "Comma-separated list of target prompt types. Required when --type is middleware." },
       { name: "--target-prompts", type: "string", required: false, description: "Comma-separated list of prompt ids to narrow middleware application to. Only valid when --type is middleware; ANDs with --target-types." },
       { name: "--timing", type: "string", required: false, description: "Middleware timing: pre or post. Required when --type is middleware." },
@@ -123,11 +123,11 @@ module.exports = {
     returns: "Prompt markdown skeleton with valid frontmatter and one or more <!-- append --> / <!-- /append --> stubs.",
     examples: [
       {
-        command: "fabric script run prompt-scaffold --id my-skill --type skill --name \"my skill\" --description \"Do the thing\"",
+        command: "fabric-poc script run prompt-scaffold --id my-skill --type skill --name \"my skill\" --description \"Do the thing\"",
         description: "Emit a skill skeleton with a single append block.",
       },
       {
-        command: "fabric script run prompt-scaffold --id english-only --type middleware --name \"english only\" --description \"Force English\" --target-types rules,skill --timing post",
+        command: "fabric-poc script run prompt-scaffold --id english-only --type middleware --name \"english only\" --description \"Force English\" --target-types rules,skill --timing post",
         description: "Emit a middleware skeleton with target_types and timing.",
       },
     ],

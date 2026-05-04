@@ -280,7 +280,7 @@ function detectBodyReferenceOrphans(kit, knownPromptIds, knownScriptIds) {
         findings.push({
           severity: "HIGH",
           where: `${p.path}.body`,
-          problem: `body references "fabric prompt get ${refId}" but no prompt with that id is known in the kit or active registry`,
+          problem: `body references "fabric-poc prompt get ${refId}" but no prompt with that id is known in the kit or active registry`,
         });
       }
     }
@@ -294,7 +294,7 @@ function detectBodyReferenceOrphans(kit, knownPromptIds, knownScriptIds) {
         findings.push({
           severity: "HIGH",
           where: `${p.path}.body`,
-          problem: `body references "fabric script run ${refId}" but no script with that id is known in the kit or active registry`,
+          problem: `body references "fabric-poc script run ${refId}" but no script with that id is known in the kit or active registry`,
         });
       }
     }
@@ -335,16 +335,16 @@ function lintKit(kitPath, context) {
 module.exports = {
   id: "prompt-kit-lint",
   name: "prompt kit lint",
-  description: "Deterministically lint a fabric prompt kit for cross-file defects the per-file linters cannot catch",
+  description: "Deterministically lint a fabric-poc prompt kit for cross-file defects the per-file linters cannot catch",
   interface: {
     details: [
       "Loads the kit's resources.toml, enumerates every prompt (prompts/*.md) and script (scripts/*.js) it declares, cross-references the active fabric registry (global + local manifests), and reports kit-level defects.",
-      "Detects: duplicate prompt or script ids within the kit; id collisions with entries in the active registry under a different path; middleware target_prompts referencing unknown prompt ids; body references to 'fabric prompt get <id>' or 'fabric script run <id>' whose target is unknown in both the kit and the active registry.",
+      "Detects: duplicate prompt or script ids within the kit; id collisions with entries in the active registry under a different path; middleware target_prompts referencing unknown prompt ids; body references to 'fabric-poc prompt get <id>' or 'fabric-poc script run <id>' whose target is unknown in both the kit and the active registry.",
       "Also detects manifest coverage gaps: physical *.md files under prompts/ or *.js files under scripts/ that are not covered by any declared glob, and directories that contain files but have no corresponding prompt_files / script_files key in resources.toml. This prevents the false-clean case where an omitted manifest key silently hides a whole directory from deterministic review.",
-      "Covers router↔modes symmetry implicitly: a router body that references 'fabric prompt get <router>-<mode>' fails the body-reference check when the matching mode file is missing.",
+      "Covers router↔modes symmetry implicitly: a router body that references 'fabric-poc prompt get <router>-<mode>' fails the body-reference check when the matching mode file is missing.",
     ],
     usage: [
-      "fabric script run prompt-kit-lint <path-to-kit-directory>",
+      "fabric-poc script run prompt-kit-lint <path-to-kit-directory>",
     ],
     parameters: [
       { name: "kit", type: "string", required: true, description: "Absolute or cwd-relative path to a kit directory that contains a resources.toml manifest." },
@@ -352,14 +352,14 @@ module.exports = {
     returns: "JSON object with kit, manifest, registryManifests, prompts (id/type/path), scripts (id/path), and findings (severity/where/problem). Empty findings means all cross-file checks passed.",
     examples: [
       {
-        command: "fabric script run prompt-kit-lint pocs/fabric-kits/prompting",
+        command: "fabric-poc script run prompt-kit-lint pocs/fabric-kits/prompting",
         description: "Lint the prompting kit for cross-file defects against the active registry.",
       },
     ],
     notes: [
       "Reports CRITICAL for intra-kit id collisions; HIGH for registry collisions, orphan middleware target_prompts, orphan body references, missing manifest keys for populated directories, and physical files outside declared globs.",
       "Does not duplicate prompt-lint or script-lint: per-file issues stay in those linters; this script focuses on cross-file integrity.",
-      "Only the literal id form of fabric prompt get / fabric script run is scanned; meta-syntactic placeholders like '<router>-<mode>' are intentionally ignored.",
+      "Only the literal id form of fabric-poc prompt get / fabric-poc script run is scanned; meta-syntactic placeholders like '<router>-<mode>' are intentionally ignored.",
       "Glob expansion supports one '*' in the file basename (e.g. prompts/*.md, scripts/*.js); manifests using deeper glob patterns require an update to this script.",
     ],
   },

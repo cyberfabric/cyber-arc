@@ -23,10 +23,10 @@ Use the user's current PRD-related request as the routing input.
 
 <!-- append "routing_prompt_loading" -->
 3. After choosing the mode, load the matching rules through the fabric tool and follow them exactly:
-   - `brainstorm` -> `fabric prompt get prd-brainstorm`
-   - `generate` -> `fabric prompt get prd-generate`
-   - `review` -> `fabric prompt get prd-review`
-   - `repair` -> `fabric prompt get prd-repair`
+   - `brainstorm` -> `fabric-poc prompt get prd-brainstorm`
+   - `generate` -> `fabric-poc prompt get prd-generate`
+   - `review` -> `fabric-poc prompt get prd-review`
+   - `repair` -> `fabric-poc prompt get prd-repair`
 <!-- /append -->
 
 <!-- append "routing_preserve_context" -->

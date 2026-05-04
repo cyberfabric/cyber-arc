@@ -2,11 +2,11 @@
 id: prompt
 type: skill
 name: prompt
-description: Route fabric prompt and script authoring: brainstorm, generate, review, repair, or script
+description: Route fabric-poc prompt and script authoring: brainstorm, generate, review, repair, or script
 ---
 
 <!-- append "routing_input" -->
-Use the user's current fabric prompt authoring request as the routing input.
+Use the user's current fabric-poc prompt authoring request as the routing input.
 <!-- /append -->
 
 <!-- append "routing_mode_dispatch" -->
@@ -14,11 +14,11 @@ Use the user's current fabric prompt authoring request as the routing input.
 
    | Mode        | When to pick                                                                                                                             | Load                                        |
    | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-   | `brainstorm`| Explore which prompts or prompt types are needed, clarify intent, or decide between new / extend / script.                               | `fabric prompt get prompt-brainstorm`       |
-   | `generate`  | Create a new prompt file or materially extend an existing one.                                                                           | `fabric prompt get prompt-generate`         |
-   | `review`    | Evaluate an existing prompt file for structural, typing, or content quality.                                                             | `fabric prompt get prompt-review`           |
-   | `repair`    | Apply fixes to an existing prompt file against review findings or type / determinism / router contracts.                                 | `fabric prompt get prompt-repair`           |
-   | `script`    | Author a fabric script (JS module exporting `id`/`name`/`description`/`interface`/`run`) or materially extend an existing one.            | `fabric prompt get prompt-script`           |
+   | `brainstorm`| Explore which prompts or prompt types are needed, clarify intent, or decide between new / extend / script.                               | `fabric-poc prompt get prompt-brainstorm`       |
+   | `generate`  | Create a new prompt file or materially extend an existing one.                                                                           | `fabric-poc prompt get prompt-generate`         |
+   | `review`    | Evaluate an existing prompt file for structural, typing, or content quality.                                                             | `fabric-poc prompt get prompt-review`           |
+   | `repair`    | Apply fixes to an existing prompt file against review findings or type / determinism / router contracts.                                 | `fabric-poc prompt get prompt-repair`           |
+   | `script`    | Author a fabric-poc script (JS module exporting `id`/`name`/`description`/`interface`/`run`) or materially extend an existing one.            | `fabric-poc prompt get prompt-script`           |
 <!-- /append -->
 
 <!-- append "routing_clarification" -->

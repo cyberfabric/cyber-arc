@@ -1,13 +1,13 @@
 module.exports = {
   id: "newhello-hello-from-script",
   name: "newhello hello from script",
-  description: "Print the newhello greeting from a fabric script",
+  description: "Print the newhello greeting from a fabric-poc script",
   interface: {
     details: [
       "Returns the sample greeting together with the raw CLI arguments received by the script.",
     ],
     usage: [
-      "fabric script run newhello-hello-from-script <value> [more-values...]",
+      "fabric-poc script run newhello-hello-from-script <value> [more-values...]",
     ],
     parameters: [
       {
@@ -20,7 +20,7 @@ module.exports = {
     returns: "Greeting string with a JSON representation of the received args array.",
     examples: [
       {
-        command: "fabric script run newhello-hello-from-script demo-value",
+        command: "fabric-poc script run newhello-hello-from-script demo-value",
         description: "Returns `Hello from script!!! args=[\"demo-value\"]`.",
       },
     ],

@@ -7,7 +7,7 @@ module.exports = {
       "Echoes the received CLI parameters in a deterministic fixture string.",
     ],
     usage: [
-      "fabric script run kit-hello-script <value> [more-values...]",
+      "fabric-poc script run kit-hello-script <value> [more-values...]",
     ],
     parameters: [
       {
@@ -20,7 +20,7 @@ module.exports = {
     returns: "String formatted as `kit-script:<comma-separated args>`.",
     examples: [
       {
-        command: "fabric script run kit-hello-script alpha beta",
+        command: "fabric-poc script run kit-hello-script alpha beta",
         description: "Returns `kit-script:alpha,beta`.",
       },
     ],

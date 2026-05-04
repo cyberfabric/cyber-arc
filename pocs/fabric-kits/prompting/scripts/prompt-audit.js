@@ -312,7 +312,7 @@ module.exports = {
       "Default-safe loader: a registered linter is accepted only when its file path lies under the same directory as prompt-audit.js itself, preventing a foreign registry entry from shadowing the canonical linter chain. Pass --allow-unsafe-require to bypass this check for audits of third-party kits you already trust.",
     ],
     usage: [
-      "fabric script run prompt-audit <path-to-dir> [--type prompt|script|both] [--allow-unsafe-require]",
+      "fabric-poc script run prompt-audit <path-to-dir> [--type prompt|script|both] [--allow-unsafe-require]",
     ],
     parameters: [
       { name: "dir", type: "string", required: true, description: "Absolute or cwd-relative path to a kit directory (contains resources.toml), a prompts/ directory, or a scripts/ directory." },
@@ -322,15 +322,15 @@ module.exports = {
     returns: "JSON object with directory, classification (kit|prompts-dir|scripts-dir), type, files (per-file lint + coverage), kitGaps (manifest coverage gaps: missing keys, orphan files outside declared globs), and summary (totals, bySeverity, uncovered paths, kitGapFindings count).",
     examples: [
       {
-        command: "fabric script run prompt-audit pocs/fabric-kits/prompting",
+        command: "fabric-poc script run prompt-audit pocs/fabric-kits/prompting",
         description: "Audit every prompt and script in the prompting kit.",
       },
       {
-        command: "fabric script run prompt-audit pocs/fabric-kits/prompting/prompts --type prompt",
+        command: "fabric-poc script run prompt-audit pocs/fabric-kits/prompting/prompts --type prompt",
         description: "Audit only the prompt markdown files in a prompts/ directory.",
       },
       {
-        command: "fabric script run prompt-audit ./vendor/some-kit --allow-unsafe-require",
+        command: "fabric-poc script run prompt-audit ./vendor/some-kit --allow-unsafe-require",
         description: "Audit a third-party kit whose linter registrations you accept as trusted.",
       },
     ],

@@ -3,7 +3,7 @@ id: hello
 ---
 
 <!-- insert "hello-user" before="body" -->
-Run `fabric script run newhello-hello-from-script demo-value`.
+Run `fabric-poc script run newhello-hello-from-script demo-value`.
 <!-- /insert -->
 
 <!-- replace "body" -->

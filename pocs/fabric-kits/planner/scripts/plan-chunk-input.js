@@ -252,7 +252,7 @@ module.exports = {
       "Operates in --dry-run mode without touching the filesystem; useful to compare signatures with an existing plan before staging a replacement package.",
     ],
     usage: [
-      "fabric script run plan-chunk-input --output-dir <path> [--max-lines <int>] [--threshold-lines <int>] [--raw-input <path>]... [--include-stdin] [--stdin-text <text>] [--dry-run]",
+      "fabric-poc script run plan-chunk-input --output-dir <path> [--max-lines <int>] [--threshold-lines <int>] [--raw-input <path>]... [--include-stdin] [--stdin-text <text>] [--dry-run]",
     ],
     parameters: [
       { name: "--output-dir", type: "string", required: true, description: "Where to write chunk files and manifest.json. Created if missing." },
@@ -266,11 +266,11 @@ module.exports = {
     returns: "JSON object with output_dir, manifest_path, input_signature, max_lines, threshold_lines, total_lines, exceeded_threshold, dry_run, wrote, chunks[], sources[], and written_files.",
     examples: [
       {
-        command: "fabric script run plan-chunk-input --output-dir ./.fabric-plans/generate-prd-myapp/input --raw-input ./request.md --include-stdin --stdin-text \"focus on auth\"",
+        command: "fabric-poc script run plan-chunk-input --output-dir ./.fabric-plans/generate-prd-myapp/input --raw-input ./request.md --include-stdin --stdin-text \"focus on auth\"",
         description: "Stage chunks and manifest for a generate task whose raw input is one file plus a direct prompt note.",
       },
       {
-        command: "fabric script run plan-chunk-input --output-dir ./.fabric-plans/generate-prd-myapp/input --raw-input ./request.md --dry-run",
+        command: "fabric-poc script run plan-chunk-input --output-dir ./.fabric-plans/generate-prd-myapp/input --raw-input ./request.md --dry-run",
         description: "Preview chunks and signature without writing anything.",
       },
     ],

@@ -6,19 +6,19 @@ description: Behavioral defect discovery methodology for fabric scripts; compani
 ---
 
 <!-- append "script_bugfinding_scope" -->
-**Scope**: behavioral defect discovery in fabric scripts — modules registered through a kit's `script_files` glob and invoked via `fabric script run <id>`.
+**Scope**: behavioral defect discovery in fabric scripts — modules registered through a kit's `script_files` glob and invoked via `fabric-poc script run <id>`.
 
 **Non-goal**: guarantee `100%` defect detection. Script behavior depends on argument shape, filesystem state, manifest state, Node version, and the fabric runtime. The practical target is **maximum recall with explicit hypotheses, counterexamples, evidence, and validation paths**.
 
-**Companion methodology**: pair with `script-engineering` (load via `fabric prompt get script-engineering`) for clarity, structure, and design review. This document is the behavioral-defect search procedure.
+**Companion methodology**: pair with `script-engineering` (load via `fabric-poc prompt get script-engineering`) for clarity, structure, and design review. This document is the behavioral-defect search procedure.
 <!-- /append -->
 
 <!-- append "script_bugfinding_principles" -->
 ## Core Principles
 
-- Treat a fabric script as executable policy: walk argument parsing, branches, IO paths, error paths, and the return contract.
+- Treat a fabric-poc script as executable policy: walk argument parsing, branches, IO paths, error paths, and the return contract.
 - Optimize for recall first, then raise precision with evidence. Missing a real defect is worse than inspecting one plausible hypothesis.
-- Distinguish **behavioral defects** from quality smells. A defect causes wrong output, wrong error, silent failure, unsafe IO, or a `fabric script help` answer that lies about behavior; quality smells are handled by `script-engineering`.
+- Distinguish **behavioral defects** from quality smells. A defect causes wrong output, wrong error, silent failure, unsafe IO, or a `fabric-poc script help` answer that lies about behavior; quality smells are handled by `script-engineering`.
 - Work from **contracts, triggers, and failure modes**, not from style alone.
 - A single review pass is insufficient. High-quality script defect discovery requires static reading plus at least one concrete invocation that observes output.
 <!-- /append -->
@@ -106,7 +106,7 @@ Apply the same defect lenses regardless of script style.
 | Argument parsing | Missing `--flag` detection, positional-vs-flag confusion, `--flag` with no value, boolean flag accidentally requires a value |
 | Path resolution | `context.cwd` vs `process.cwd()` mismatch, missing `path.isAbsolute` guard, `..` traversal from user input, trailing-slash differences |
 | Filesystem IO | Read before `fs.existsSync`, write without the target directory existing, partial write on error, non-atomic write |
-| Require graph | Relative reach into fabric internals; third-party package undeclared in any reachable `package.json`; package declared in kit `package.json` but kit not installed (fabric register skipped or `--no-install` used without prior install); cross-kit `require` reaching a sibling kit's `node_modules/`; circular require; require-time side effect (see `fabric prompt get kit-dependencies` for the per-kit dependency feature) |
+| Require graph | Relative reach into fabric internals; third-party package undeclared in any reachable `package.json`; package declared in kit `package.json` but kit not installed (fabric-poc register skipped or `--no-install` used without prior install); cross-kit `require` reaching a sibling kit's `node_modules/`; circular require; require-time side effect (see `fabric-poc prompt get kit-dependencies` for the per-kit dependency feature) |
 | Side effects | Hidden network IO, hidden subprocess, silent write outside user-provided path, direct manifest edit |
 | Determinism | Reliance on wall-clock, random, or undocumented external state; unstable ordering of directory listings or Set iteration |
 | Error handling | Silent swallow, generic `Error("something went wrong")` without parameter context, double-throw, unhandled rejection in `run()` |
@@ -125,14 +125,14 @@ A suspected defect becomes much stronger when you can describe exactly how the s
 
 - Build the smallest trigger: minimal `args` array plus minimal filesystem / manifest state needed to violate an invariant
 - Express the failure as `args + state -> code path -> wrong behavior`
-- Prefer concrete commands (`fabric script run <id> --flag value`) with the expected vs observed output
+- Prefer concrete commands (`fabric-poc script run <id> --flag value`) with the expected vs observed output
 - Search for guard clauses, input validation, or downstream checks that would prevent the hypothesis
 - If no plausible failure trace can be constructed, lower confidence or discard the finding
 
 **Minimum command form for a counterexample**:
 
 ```
-fabric script run <id> <args> # on cwd=<dir>
+fabric-poc script run <id> <args> # on cwd=<dir>
 # Expected: <what interface.returns says>
 # Observed: <what actually prints, or the thrown message>
 ```
@@ -211,8 +211,8 @@ For each script hotspot:
 <!-- append "script_bugfinding_integration" -->
 ## Integration with prompt-script and prompt-review
 
-- Use this methodology when the reviewer's task is defect hunting, hidden failure modes, regressions, unsafe IO, or root causes in a fabric script
-- Use the `script-engineering` rules (load via `fabric prompt get script-engineering`) for clarity, structure, interface-parity, and improvement synthesis review
+- Use this methodology when the reviewer's task is defect hunting, hidden failure modes, regressions, unsafe IO, or root causes in a fabric-poc script
+- Use the `script-engineering` rules (load via `fabric-poc prompt get script-engineering`) for clarity, structure, interface-parity, and improvement synthesis review
 - This methodology is **the behavioral defect search procedure** that layers on top of `prompt-script`'s authoring loop and on top of `prompt-review` when the reviewed prompt depends on a script (the `script-involvement` middleware injects the load)
 - Findings from this methodology use the single fabric-level severity scale (`CRITICAL`-to-`LOW`) so they can be merged with prompt-side findings without translation
 <!-- /append -->

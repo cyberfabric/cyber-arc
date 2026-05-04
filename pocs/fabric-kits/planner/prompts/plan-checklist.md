@@ -6,7 +6,7 @@ description: Seven-category validation checklist for a fabric plan directory —
 ---
 
 <!-- append "plan_checklist_intro" -->
-Apply this checklist when validating a generated plan or re-validating after edits. Categories 1, 5, 6, 7 have a deterministic backstop in `fabric script run plan-lint <plan_dir>` and `fabric script run plan-phase-validate <phase_file> <brief_file>`. Categories 2, 3, 4 require judgment and content reading — they cannot be fully automated and need a human or LLM reviewer pass.
+Apply this checklist when validating a generated plan or re-validating after edits. Categories 1, 5, 6, 7 have a deterministic backstop in `fabric-poc script run plan-lint <plan_dir>` and `fabric-poc script run plan-phase-validate <phase_file> <brief_file>`. Categories 2, 3, 4 require judgment and content reading — they cannot be fully automated and need a human or LLM reviewer pass.
 
 For each item: PASS / FAIL / N/A. A single FAIL in any item makes the overall checklist FAIL. Use `planner-review` to apply this checklist programmatically.
 <!-- /append -->
@@ -51,7 +51,7 @@ For each item: PASS / FAIL / N/A. A single FAIL in any item makes the overall ch
 - [ ] Every navigation rule (`ALWAYS open`, `OPEN and follow`, `ALWAYS open and follow`) from the target workflow has been processed during decomposition; the loaded-file manifest is recorded.
 - [ ] Each phase's brief Load Instructions name every file the phase needs at runtime, with the specific section / line range to retain.
 - [ ] No phase reads a file at runtime that is not named in its brief Load Instructions.
-- [ ] Companion skills loaded via `fabric prompt get <id>` are named in the brief and in the phase file's Load section.
+- [ ] Companion skills loaded via `fabric-poc prompt get <id>` are named in the brief and in the phase file's Load section.
 - [ ] When `plan.input_chunks` is non-empty, every chunk file is assigned to at least one phase's `input_files` and appears in that phase's brief Load Instructions.
 <!-- /append -->
 

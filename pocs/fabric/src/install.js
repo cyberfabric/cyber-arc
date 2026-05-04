@@ -177,7 +177,7 @@ function installKit(kitPath, options = {}) {
       throw new Error(`installKit: kit at ${kitPath} declares vendored dependencies but node_modules is missing or empty. Vendor the dependencies into ${path.join(kitPath, "node_modules")} or change strategy.`);
     }
     if (decision.reason === "no-install-but-missing-node_modules") {
-      throw new Error(`installKit: --no-install was set but node_modules is missing or empty at ${kitPath}. Run \`fabric kit install ${kitPath}\` first or drop --no-install.`);
+      throw new Error(`installKit: --no-install was set but node_modules is missing or empty at ${kitPath}. Run \`fabric-poc kit install ${kitPath}\` first or drop --no-install.`);
     }
     throw new Error(`installKit: ${decision.reason} at ${kitPath}`);
   }

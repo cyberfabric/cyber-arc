@@ -36,7 +36,7 @@ Disregard all previous chat context. This phase file is self-contained. Read ONL
 
 ## Load
 1. Read the brief file at `{plan_dir}/brief-{NN}-{slug}.md` from disk and follow its Load Instructions verbatim.
-2. For each entry in `skills_loaded[role=companion]`, run `fabric prompt get {id}` and treat its output as inlined rules for this phase.
+2. For each entry in `skills_loaded[role=companion]`, run `fabric-poc prompt get {id}` and treat its output as inlined rules for this phase.
 3. For each entry in `input_files`, read the file and retain only the section ranges named in the brief.
 4. For each entry in `inputs`, read `{plan_dir}/{path}` and retain only the section ranges named in the brief.
 5. Do not load files outside this list.
@@ -47,7 +47,7 @@ Disregard all previous chat context. This phase file is self-contained. Read ONL
 - This section MUST NOT introduce a delegation target other than the listed sub-agents.
 
 ## Task
-{Concrete imperative steps. Every step that has a single correct output for fixed inputs MUST cite a fabric script (`fabric script run <id> ...`) instead of describing the logic in prose. Steps that require judgment, drafting, discussion, or review MUST cite the loaded companion skill that owns that judgment.}
+{Concrete imperative steps. Every step that has a single correct output for fixed inputs MUST cite a fabric-poc script (`fabric-poc script run <id> ...`) instead of describing the logic in prose. Steps that require judgment, drafting, discussion, or review MUST cite the loaded companion skill that owns that judgment.}
 
 ## Rules
 {Inline every applicable `MUST` / `MUST NOT` rule that the brief assigns to this phase, verbatim. NEVER summarize, trim, or cherry-pick rules to fit budget — split the phase instead.}
@@ -76,7 +76,7 @@ If no interaction points are assigned, write: `No phase-bound user decisions.`
 <!-- append "template_load_section" -->
 The Load section is the single discovery point for the phase. The runner MUST NOT read any file that is not reached transitively through the brief, the listed companion skills, the listed `input_files`, or the listed `inputs`. The brief is the only gateway: every file the phase ever needs is named there.
 
-Companion skills are loaded with `fabric prompt get {id}` and treated as inlined rules. Tool skills are invoked once per use as `fabric script run {id} ...` (or the equivalent registered slash command). Sub-agents are dispatched per the Dispatch section, not loaded as rules.
+Companion skills are loaded with `fabric-poc prompt get {id}` and treated as inlined rules. Tool skills are invoked once per use as `fabric-poc script run {id} ...` (or the equivalent registered slash command). Sub-agents are dispatched per the Dispatch section, not loaded as rules.
 <!-- /append -->
 
 <!-- append "template_dispatch_section" -->

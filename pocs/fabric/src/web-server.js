@@ -79,7 +79,7 @@ function fallbackIndex(res, missingPath) {
     if (err || !stats.isFile()) {
       res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
       res.end(
-        `fabric web: ${missingPath} not found.\n` +
+        `fabric-poc web: ${missingPath} not found.\n` +
           `Hint: build the web UI first — \`cd ${path.relative(process.cwd(), path.join(WEB_DIST, "..")) || "web"} && npm install && npm run build\`.\n`,
       );
       return;
@@ -102,7 +102,7 @@ function runWebServer(args) {
 
   if (!fs.existsSync(WEB_DIST)) {
     process.stderr.write(
-      `fabric web: web/dist not found at ${WEB_DIST}.\n` +
+      `fabric-poc web: web/dist not found at ${WEB_DIST}.\n` +
         `Build the UI first: cd ${path.join(path.relative(process.cwd(), WEB_DIST), "..")} && npm install && npm run build\n`,
     );
     return 1;
@@ -120,7 +120,7 @@ function runWebServer(args) {
     });
 
     server.on("error", (err) => {
-      process.stderr.write(`fabric web: server error — ${err.message}\n`);
+      process.stderr.write(`fabric-poc web: server error — ${err.message}\n`);
       resolve(1);
     });
 

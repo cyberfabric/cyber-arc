@@ -11,10 +11,10 @@ Use the user's request as the routing input. Expect a path to an existing plan d
 
 <!-- append "planner_review_workflow" -->
 1. Resolve `<plan_dir>`. Confirm `<plan_dir>/plan.toml` exists.
-2. Load the seven-category checklist via `fabric prompt get plan-checklist`.
+2. Load the seven-category checklist via `fabric-poc prompt get plan-checklist`.
 3. Run the deterministic backstops:
-   - `fabric script run plan-lint <plan_dir>` — covers categories 1 (structural), 5 (phase independence — partial), 6 (budget), 7 (lifecycle).
-   - For each phase listed in the manifest, run `fabric script run plan-phase-validate <plan_dir>/<phases[i].file> <plan_dir>/<phases[i].brief_file>` — covers category 5 (heading set + order, unresolved placeholders, line budget per phase).
+   - `fabric-poc script run plan-lint <plan_dir>` — covers categories 1 (structural), 5 (phase independence — partial), 6 (budget), 7 (lifecycle).
+   - For each phase listed in the manifest, run `fabric-poc script run plan-phase-validate <plan_dir>/<phases[i].file> <plan_dir>/<phases[i].brief_file>` — covers category 5 (heading set + order, unresolved placeholders, line budget per phase).
 4. For categories 2 (interactive questions), 3 (rules coverage), 4 (context completeness): inspect the briefs and phase files yourself. These require judgment and content reading; the deterministic scripts do not cover them.
 5. Aggregate findings into a single report grouped by checklist category. For each FAIL, name the specific item, the affected phase / file, and a concrete repair recommendation citing the corresponding script (`plan-phase-validate`, `plan-lint`) or the brief / phase file to edit.
 <!-- /append -->

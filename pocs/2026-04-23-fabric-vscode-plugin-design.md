@@ -29,7 +29,7 @@ A VS Code extension that provides a native UI for managing fabric: installing an
 
 **User:** a developer who configures their agent environment (Claude Code, Codex, eventually Cursor/Windsurf/Copilot) from inside VS Code.
 
-**Problem today:** fabric kits are installed and registered via CLI commands that are discoverable only through documentation. Setting up a new project's agent environment requires terminal fluency and accurate memory of `fabric register --local --include-global`-style flag combinations.
+**Problem today:** fabric kits are installed and registered via CLI commands that are discoverable only through documentation. Setting up a new project's agent environment requires terminal fluency and accurate memory of `fabric-poc register --local --include-global`-style flag combinations.
 
 **What the plugin fixes:** a sidebar that makes the current state visible at a glance (installed kits, active marketplaces, registered agents) and exposes every fabric operation as a click or command-palette entry.
 
@@ -178,7 +178,7 @@ On first activation, if no marketplaces are registered, the plugin surfaces a on
 
 ### 9.2 Commands
 
-- `Fabric: Register Agents…` — multi-pick of agents from `fabric.agents.list()`, then QuickPick scope. Scope options mirror the `fabric register` flag combinations: **Default** (no flags — fabric's built-in defaults), **Project** (`--local`), **Global** (`--include-global`), **Project + Global** (`--local --include-global`).
+- `Fabric: Register Agents…` — multi-pick of agents from `fabric.agents.list()`, then QuickPick scope. Scope options mirror the `fabric-poc register` flag combinations: **Default** (no flags — fabric's built-in defaults), **Project** (`--local`), **Global** (`--include-global`), **Project + Global** (`--local --include-global`).
 - `Fabric: Unregister Agents…` — inverse.
 - Also reachable via context menu on each agent row in the Agents view.
 
@@ -188,7 +188,7 @@ Each agent shows: display name, `detected` state, `registered` state, and an exp
 
 ### 9.4 CLI Vocabulary (post-PoC reference)
 
-- `fabric register [path] [--agent <id>] [--local] [--include-global]`
+- `fabric-poc register [path] [--agent <id>] [--local] [--include-global]`
 - `fabric unregister [path] [--agent <id>] [--local] [--include-global]`
 - Without `--agent`, the operation covers all known agents.
 
@@ -196,7 +196,7 @@ Each agent shows: display name, `detected` state, `registered` state, and an exp
 
 ### 10.1 Status
 
-- The CLI is **required in production** because materialized agent skills invoke `fabric prompt get <name>` at runtime.
+- The CLI is **required in production** because materialized agent skills invoke `fabric-poc prompt get <name>` at runtime.
 - In the PoC, the installer walkthrough is a **mock**. Clicking "Install" runs a 2-second fake spinner and flips the mock `detectCli()` result.
 
 ### 10.2 Production Plan (non-PoC reference)
@@ -246,16 +246,16 @@ fabric.system.MIN_CLI_VERSION: string
 Existing commands kept as-is. New commands required:
 
 ```
-fabric kit list [--scope project|global|both] [--json]
-fabric kit install <source> [--scope …] [--version …]
-fabric kit update <name> [--scope …]
-fabric kit uninstall <name> [--scope …]
+fabric-poc kit list [--scope project|global|both] [--json]
+fabric-poc kit install <source> [--scope …] [--version …]
+fabric-poc kit update <name> [--scope …]
+fabric-poc kit uninstall <name> [--scope …]
 fabric marketplace add <source>
 fabric marketplace list [--json]
 fabric marketplace remove <name>
 fabric marketplace refresh
-fabric agent list [--json]
-fabric register [path] [--agent <id>] [--local] [--include-global]
+fabric-poc agent list [--json]
+fabric-poc register [path] [--agent <id>] [--local] [--include-global]
 fabric unregister [path] [--agent <id>] [--local] [--include-global]
 ```
 

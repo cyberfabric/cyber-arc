@@ -11,7 +11,7 @@ Use the user's request as the routing input. Expect a path to an existing plan d
 
 <!-- append "planner_status_workflow" -->
 1. Resolve `<plan_dir>` from the user's input. Confirm `<plan_dir>/plan.toml` exists; if not, report `No plan found at {plan_dir}` and stop.
-2. Run `fabric script run plan-status <plan_dir>`. The script returns a JSON object with plan-level metadata, `phase_summary`, `next_executable`, and per-phase entries.
+2. Run `fabric-poc script run plan-status <plan_dir>`. The script returns a JSON object with plan-level metadata, `phase_summary`, `next_executable`, and per-phase entries.
 3. Render the JSON as the canonical text report:
    ```
    Plan: {task}

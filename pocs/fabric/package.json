@@ -1,5 +1,5 @@
 {
-  "name": "@cyberfabric/fabric",
+  "name": "@cyberfabric/fabric-poc",
   "version": "0.1.0",
   "private": true,
   "description": "Minimal Fabric prompt tool and Claude Code plugin",
@@ -9,7 +9,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "fabric": "./bin/fabric"
+    "fabric-poc": "./bin/fabric"
   },
   "dependencies": {
     "@iarna/toml": "^2.2.5"

@@ -22,7 +22,7 @@ You DO NOT update `plan.toml` status — that is the dispatcher's responsibility
    - the `Rules` section (verbatim rules to honor)
    - the `User Decisions` section (any phase-bound questions to resolve before producing outputs)
    - the `Acceptance Criteria` section (the checkbox list you must satisfy)
-2. For each entry in `skills_loaded[role=companion]`, run `fabric prompt get {id}` and treat the output as inlined methodology rules for this phase. Cite specific layers when applicable.
+2. For each entry in `skills_loaded[role=companion]`, run `fabric-poc prompt get {id}` and treat the output as inlined methodology rules for this phase. Cite specific layers when applicable.
 3. For each entry in `input_files`, read the file and retain only the section ranges named in the phase's Load section.
 4. For each entry in `inputs`, read `plan_dir/{path}` (the upstream phase's intermediate output) and retain only what the Task section actually consumes.
 5. Do NOT load files outside this list. The phase is self-contained per the Context Boundary; widen the load only if the loaded methodology explicitly requires it AND the brief / phase Load instructions allow it.
@@ -31,8 +31,8 @@ You DO NOT update `plan.toml` status — that is the dispatcher's responsibility
 <!-- append "planner_agent_execute_run" -->
 Follow the phase's `Task` section step by step:
 
-- For every step that maps to a `fabric script run <id>` invocation, run the script and use its output. Do NOT inline the logic.
-- For every step that maps to a `fabric prompt get <id>` invocation, load that prompt and apply its instructions.
+- For every step that maps to a `fabric-poc script run <id>` invocation, run the script and use its output. Do NOT inline the logic.
+- For every step that maps to a `fabric-poc prompt get <id>` invocation, load that prompt and apply its instructions.
 - For every step requiring judgment, apply the loaded companion methodology and cite layers / bug-class codes rather than restating.
 - For every `User Decisions` entry that is unanswered: HALT, return FAIL with `notes` naming the unresolved decision. Do NOT guess defaults — the dispatcher should have resolved them before dispatch (per `planner-brainstorm` Phase 4 / `planner-execute` pre-dispatch handling).
 

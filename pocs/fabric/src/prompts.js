@@ -17,18 +17,18 @@ const allowedMiddlewareTimings = new Set(["pre", "post"]);
 const promptTypeCatalog = [
   {
     type: "skill",
-    summary: "Directly invokable fabric skill; becomes `fabric-<id>` after fabric register.",
+    summary: "Directly invokable fabric skill; becomes `fabric-<id>` after fabric-poc register.",
     whenToUse: "The user should invoke this capability as a named skill (for example a router or a top-level action).",
     requiredFields: ["id", "type", "name", "description"],
     optionalFields: [],
     notes: [
-      "Registered to .claude/skills and .agents/skills by `fabric register`.",
-      "Routers of this type should dispatch to `rules` prompts via `fabric prompt get <id>-<mode>`.",
+      "Registered to .claude/skills and .agents/skills by `fabric-poc register`.",
+      "Routers of this type should dispatch to `rules` prompts via `fabric-poc prompt get <id>-<mode>`.",
     ],
   },
   {
     type: "rules",
-    summary: "Mode-specific rule body loaded by another prompt via `fabric prompt get`.",
+    summary: "Mode-specific rule body loaded by another prompt via `fabric-poc prompt get`.",
     whenToUse: "A router skill needs to pull in mode-specific instructions (brainstorm / generate / review / ...).",
     requiredFields: ["id", "type", "name", "description"],
     optionalFields: [],
@@ -40,7 +40,7 @@ const promptTypeCatalog = [
   {
     type: "template",
     summary: "Static template content (document layout, placeholder structure) loaded by other prompts.",
-    whenToUse: "You need a reusable layout or scaffold consumed via `fabric prompt get <id>`.",
+    whenToUse: "You need a reusable layout or scaffold consumed via `fabric-poc prompt get <id>`.",
     requiredFields: ["id", "type", "name", "description"],
     optionalFields: [],
     notes: [
@@ -67,7 +67,7 @@ const promptTypeCatalog = [
     requiredFields: ["id", "type", "name", "description"],
     optionalFields: [],
     notes: [
-      "Write explicit sequential steps; offload deterministic steps to `fabric script run <id>`.",
+      "Write explicit sequential steps; offload deterministic steps to `fabric-poc script run <id>`.",
     ],
   },
   {

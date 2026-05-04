@@ -181,7 +181,7 @@ Never describe semantic review, checklist review, or manual inspection as determ
 <!-- append "bug_finding_l7_companion_format" -->
 Companion-format integration:
 
-- When this methodology is paired with the `prompt-engineering` rules (loaded via `fabric prompt get prompt-engineering`), keep that document's required report section order.
+- When this methodology is paired with the `prompt-engineering` rules (loaded via `fabric-poc prompt get prompt-engineering`), keep that document's required report section order.
 - Put the six fields above at the top of `Summary`, then place dependency budget, loaded slices, and overflow handling in `Context Budget & Evidence`.
 - Reflect hotspot coverage, decisive dependency checks, unresolved review debt, and pending validations in `Layer Summaries` and `Verification Checklist` instead of creating a second competing report preamble.
 <!-- /append -->
@@ -237,10 +237,10 @@ Efficiency rules:
 <!-- /append -->
 
 <!-- append "bug_finding_integration_fabric" -->
-## Integration with fabric prompt-review
+## Integration with fabric-poc prompt-review
 
 - Use this methodology when the user asks to find bugs, hidden failure modes, regressions, unsafe behavior, instruction conflicts, routing defects, or root causes in prompts or agent instruction documents.
-- Use the `prompt-engineering` rules (load via `fabric prompt get prompt-engineering`) for clarity, structure, anti-pattern, context-engineering, and improvement synthesis review.
+- Use the `prompt-engineering` rules (load via `fabric-poc prompt get prompt-engineering`) for clarity, structure, anti-pattern, context-engineering, and improvement synthesis review.
 - Use this methodology as the **behavioral defect search procedure** that layers on top of the base `prompt-review` deterministic-plus-judgment flow; `prompt-engineering` remains the broader quality and design methodology.
 - In prompt review, treat safe compaction opportunities that merely improve efficiency as quality work, but treat compaction that removes required triggers, guardrails, or recovery paths as a prompt bug.
 <!-- /append -->

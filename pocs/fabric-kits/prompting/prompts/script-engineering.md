@@ -6,11 +6,11 @@ description: Clarity, structure, interface-parity, determinism-boundary, side-ef
 ---
 
 <!-- append "script_engineering_scope" -->
-**Scope**: any fabric script — a JavaScript module registered through a kit's `script_files` glob and invoked via `fabric script run <id>`.
+**Scope**: any fabric-poc script — a JavaScript module registered through a kit's `script_files` glob and invoked via `fabric-poc script run <id>`.
 
 **Out of scope**: does not generate a "best script" template; defines a review and authoring method plus a report format.
 
-**Companion methodology**: for behavioral defect hunting, hidden failure modes, and unsafe IO paths, also use the `script-bug-finding` rules (load via `fabric prompt get script-bug-finding`).
+**Companion methodology**: for behavioral defect hunting, hidden failure modes, and unsafe IO paths, also use the `script-bug-finding` rules (load via `fabric-poc prompt get script-bug-finding`).
 <!-- /append -->
 
 <!-- append "script_engineering_overview" -->
@@ -29,7 +29,7 @@ Fabric scripts are deterministic executable policy. Review them like small, stri
 | L1 | What kind of script is this (scaffold, lint, resolver, transformer, IO helper, integration)? |
 | L2 | Are the exports and the `interface` object explicit and unambiguous? |
 | L3 | Is the script structured so one caller can invoke it and one reader can audit it? |
-| L4 | Does the exported `interface` match what `fabric script help <id>` actually prints and what `run()` actually does? |
+| L4 | Does the exported `interface` match what `fabric-poc script help <id>` actually prints and what `run()` actually does? |
 | L5 | Is the determinism boundary respected? |
 | L6 | Is the side-effect budget respected? |
 | L7 | Is the require graph portable across kits? |
@@ -49,7 +49,7 @@ Identify the primary purpose exactly once, so review expectations are calibrated
 - `IO helper` — reads or emits files, tightly bounded to user-supplied paths
 - `integration` — reaches into fabric internals or external systems (rare, must be justified)
 
-Dependencies: list every `require` target. Classification-level findings: circular dependencies, relative reaches into fabric internals (`../../../fabric/src/*`), and third-party packages that are not declared in either the kit's own `package.json` (per-kit dependency feature, see `fabric prompt get kit-dependencies`) or `pocs/fabric/package.json` (fabric-core deps reachable through `pocs/node_modules/`).
+Dependencies: list every `require` target. Classification-level findings: circular dependencies, relative reaches into fabric internals (`../../../fabric/src/*`), and third-party packages that are not declared in either the kit's own `package.json` (per-kit dependency feature, see `fabric-poc prompt get kit-dependencies`) or `pocs/fabric/package.json` (fabric-core deps reachable through `pocs/node_modules/`).
 <!-- /append -->
 
 <!-- append "script_engineering_L2_clarity" -->
@@ -87,7 +87,7 @@ Dependencies: list every `require` target. Classification-level findings: circul
 <!-- append "script_engineering_L4_interface_parity" -->
 ## L4: Interface-vs-Help Parity
 
-Fabric reads the exported `interface` object verbatim to render `fabric script help <id>`. Drift between `interface` and `run()` is a user-facing correctness bug.
+Fabric reads the exported `interface` object verbatim to render `fabric-poc script help <id>`. Drift between `interface` and `run()` is a user-facing correctness bug.
 
 **Parity checks**:
 - every `parameters[].name` corresponds to a real CLI flag or positional that `run()` reads
@@ -97,7 +97,7 @@ Fabric reads the exported `interface` object verbatim to render `fabric script h
 - every `examples[].command` must execute against a normal registered fabric without undocumented setup
 - `usage[]` strings must be runnable copy-paste (no placeholder angle-brackets that the user cannot resolve from context)
 
-**Verification command**: after registering, run `fabric script help <id>` and compare its output to the exported `interface` field by field.
+**Verification command**: after registering, run `fabric-poc script help <id>` and compare its output to the exported `interface` field by field.
 <!-- /append -->
 
 <!-- append "script_engineering_L5_determinism" -->
@@ -139,7 +139,7 @@ Fabric reads the exported `interface` object verbatim to render `fabric script h
 - require fabric internals only via `require("@cyberfabric/fabric")`
 - use `context.cwd`, `context.homeDir`, `context.fabricHome` for path resolution; do not assume `process.cwd()` matches the caller's working directory
 - use `path.isAbsolute` / `path.join` for path construction; never string-concatenate paths with `/`
-- declare third-party packages the script imports in the kit's own `package.json` so `fabric register` installs them via the per-kit dependency feature (see `fabric prompt get kit-dependencies` for declaration, strategies, and runtime reachability)
+- declare third-party packages the script imports in the kit's own `package.json` so `fabric-poc register` installs them via the per-kit dependency feature (see `fabric-poc prompt get kit-dependencies` for declaration, strategies, and runtime reachability)
 
 **MUST NOT**:
 - `require("../../../fabric/src/*")` — couples the kit to a specific monorepo layout; failed when the kit is distributed standalone; closed by the `@cyberfabric/fabric` package
@@ -161,7 +161,7 @@ Fabric reads the exported `interface` object verbatim to render `fabric script h
 
 **Fabric test harness** (where applicable):
 - fabric core ships a test suite under `pocs/fabric/test/fabric.test.js`; new scripts that are core-facing should have a matching test entry
-- kit-local scripts can be tested via `fabric script run <id>` invocations in a sandbox cwd with a crafted `resources.toml`
+- kit-local scripts can be tested via `fabric-poc script run <id>` invocations in a sandbox cwd with a crafted `resources.toml`
 
 **Validation evidence**:
 - every script review should cite at least one concrete invocation that was executed and the output observed, or mark the review `PARTIAL` with the exact missing invocation
@@ -212,7 +212,7 @@ Review is complete when:
 - [ ] Fixes prioritized by impact/effort
 - [ ] Implementation guidance provided (`Where`, `How`, `Verify`)
 - [ ] At least one concrete invocation was executed and its output cited
-- [ ] `fabric script help <id>` output was compared against the exported `interface` object field by field (L4)
+- [ ] `fabric-poc script help <id>` output was compared against the exported `interface` object field by field (L4)
 - [ ] Determinism and side-effect budgets were checked explicitly (L5, L6)
 - [ ] Require graph was walked for portability violations (L7)
 - [ ] No claim of `100%` detection or blanket coverage was made

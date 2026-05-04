@@ -14,7 +14,7 @@ description: Clarity, structure, anti-pattern, context-engineering, and improvem
 
 **Out of scope**: This does not provide a "best prompt" template or generate production prompts; it defines a review method and report format.
 
-**Companion methodology**: for bug hunting, hidden failure modes, unsafe behavior, regressions, instruction conflicts, or root-cause analysis in prompts and agent instructions, also use the `prompt-bug-finding` rules (load via `fabric prompt get prompt-bug-finding`) as the behavioral defect search procedure.
+**Companion methodology**: for bug hunting, hidden failure modes, unsafe behavior, regressions, instruction conflicts, or root-cause analysis in prompts and agent instructions, also use the `prompt-bug-finding` rules (load via `fabric-poc prompt get prompt-bug-finding`) as the behavioral defect search procedure.
 <!-- /append -->
 
 <!-- append "engineering_overview" -->
@@ -54,7 +54,7 @@ Agent instructions are executable policy for human cognition. Review them like s
 
 **Preconditions**: record what must already be true, what context must be loaded first, and what tools or capabilities are assumed.
 
-**Fabric type mapping**: when reviewing a fabric prompt, map the primary types above to the fabric catalog returned by `fabric prompt types` (`skill`, `rules`, `template`, `middleware`, `workflow`, `checklist`, `agent`). The fabric catalog is authoritative for type-fit checks; this classification layer is additive.
+**Fabric type mapping**: when reviewing a fabric-poc prompt, map the primary types above to the fabric catalog returned by `fabric-poc prompt types` (`skill`, `rules`, `template`, `middleware`, `workflow`, `checklist`, `agent`). The fabric catalog is authoritative for type-fit checks; this classification layer is additive.
 <!-- /append -->
 
 <!-- append "engineering_l2_clarity" -->
@@ -327,7 +327,7 @@ When the deterministic gate is `SKIPPED`, do not describe semantic review, check
 <!-- /append -->
 
 <!-- append "engineering_integration_fabric" -->
-## Integration with fabric prompt-review
+## Integration with fabric-poc prompt-review
 
 - **Base review**: the `prompt-review` rules run the deterministic lints (`prompt-lint`, `prompt-register-dryrun`) plus the type-fit / determinism-boundary / router-pattern judgment checks. Use those before applying this methodology.
 - **Quality layer**: use this methodology as the clarity, structure, anti-pattern, context-engineering, and improvement-synthesis layer on top of `prompt-review`.

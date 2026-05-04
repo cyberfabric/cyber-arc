@@ -75,7 +75,7 @@ function buildInterface(parsed) {
   const details = jsonArrayField(parsed, "details");
   const usage = parsed.usage
     ? jsonArrayField(parsed, "usage")
-    : [`fabric script run ${parsed.id}${parsed.parameters ? " <args>" : ""}`];
+    : [`fabric-poc script run ${parsed.id}${parsed.parameters ? " <args>" : ""}`];
   const parameters = parsed.parameters ? JSON.parse(parsed.parameters) : [];
   const returns = parsed.returns || "TODO: describe the shape that fabric will print.";
   const examples = parsed.examples ? JSON.parse(parsed.examples) : [];
@@ -118,19 +118,19 @@ function buildSkeleton(parsed) {
 module.exports = {
   id: "script-scaffold",
   name: "script scaffold",
-  description: "Emit a valid fabric script module skeleton with id, name, description, interface, and a run stub",
+  description: "Emit a valid fabric-poc script module skeleton with id, name, description, interface, and a run stub",
   interface: {
     details: [
-      "Generates a Node module skeleton that satisfies the fabric script contract: exports id, name, description, interface (with details, usage, parameters, returns, examples, notes), and a run(args, context) stub that throws \"not implemented\".",
+      "Generates a Node module skeleton that satisfies the fabric-poc script contract: exports id, name, description, interface (with details, usage, parameters, returns, examples, notes), and a run(args, context) stub that throws \"not implemented\".",
       "Produces no file output — writes the skeleton to stdout so the caller can pipe or paste it into scripts/<id>.js.",
     ],
     usage: [
-      "fabric script run script-scaffold --id <kebab-id> --name <name> --description <description> [--parameters <json>] [--returns <str>] [--examples <json>] [--details <json>] [--usage <json>] [--notes <json>]",
+      "fabric-poc script run script-scaffold --id <kebab-id> --name <name> --description <description> [--parameters <json>] [--returns <str>] [--examples <json>] [--details <json>] [--usage <json>] [--notes <json>]",
     ],
     parameters: [
       { name: "--id", type: "string", required: true, description: "Stable kebab-case id for the new script." },
       { name: "--name", type: "string", required: true, description: "Human-friendly one-line name." },
-      { name: "--description", type: "string", required: true, description: "One-line purpose shown in fabric script list." },
+      { name: "--description", type: "string", required: true, description: "One-line purpose shown in fabric-poc script list." },
       { name: "--parameters", type: "string", required: false, description: "JSON array of {name, type, required, description} for interface.parameters." },
       { name: "--returns", type: "string", required: false, description: "One-sentence description of what run() returns; defaults to a TODO placeholder." },
       { name: "--examples", type: "string", required: false, description: "JSON array of {command, description} for interface.examples." },
@@ -141,11 +141,11 @@ module.exports = {
     returns: "Node module skeleton string with a complete module.exports object and a run() stub that throws 'not implemented'.",
     examples: [
       {
-        command: "fabric script run script-scaffold --id my-script --name \"my script\" --description \"Do the thing\"",
+        command: "fabric-poc script run script-scaffold --id my-script --name \"my script\" --description \"Do the thing\"",
         description: "Emit a minimal skeleton with empty parameters/examples/notes arrays.",
       },
       {
-        command: "fabric script run script-scaffold --id find-things --name \"find things\" --description \"Find a thing\" --parameters '[{\"name\":\"--path\",\"type\":\"string\",\"required\":true,\"description\":\"Path to the thing\"}]'",
+        command: "fabric-poc script run script-scaffold --id find-things --name \"find things\" --description \"Find a thing\" --parameters '[{\"name\":\"--path\",\"type\":\"string\",\"required\":true,\"description\":\"Path to the thing\"}]'",
         description: "Emit a skeleton with a typed --path parameter already declared in interface.",
       },
     ],

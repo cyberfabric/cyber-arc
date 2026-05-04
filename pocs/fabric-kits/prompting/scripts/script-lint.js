@@ -97,7 +97,7 @@ function lintInterface(module_, findings) {
     findings.push({
       severity: "MEDIUM",
       where: "module.exports.interface",
-      problem: "interface is missing; fabric script help will have minimal output",
+      problem: "interface is missing; fabric-poc script help will have minimal output",
     });
     return;
   }
@@ -210,7 +210,7 @@ function scanStdoutWrites(source, findings) {
 module.exports = {
   id: "script-lint",
   name: "script lint",
-  description: "Deterministically lint a fabric script file for exports shape, interface shape, determinism, and side-effect-budget violations",
+  description: "Deterministically lint a fabric-poc script file for exports shape, interface shape, determinism, and side-effect-budget violations",
   interface: {
     details: [
       "Reads the source and evaluates the module inside an isolated node:vm sandbox with require() stubbed to a no-op, a 500 ms execution cap, and no access to fs / network / subprocess globals. The inspected value of module.exports drives every exports- and interface-shape finding.",
@@ -219,7 +219,7 @@ module.exports = {
       "Does not cover determinism beyond what static scan and sandbox evaluation can infer; dynamic determinism remains a judgment finding for prompt-script / script-bug-finding.",
     ],
     usage: [
-      "fabric script run script-lint <path-to-script.js>",
+      "fabric-poc script run script-lint <path-to-script.js>",
     ],
     parameters: [
       { name: "path", type: "string", required: true, description: "Absolute or cwd-relative path to the script file to lint." },
@@ -227,7 +227,7 @@ module.exports = {
     returns: "JSON object with file and findings (array of {severity, where, problem}). Empty findings means the file passed all deterministic checks.",
     examples: [
       {
-        command: "fabric script run script-lint pocs/fabric-kits/prompting/scripts/prompt-scaffold.js",
+        command: "fabric-poc script run script-lint pocs/fabric-kits/prompting/scripts/prompt-scaffold.js",
         description: "Lint the prompt-scaffold script in the sandbox.",
       },
     ],

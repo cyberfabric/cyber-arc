@@ -161,7 +161,7 @@ module.exports = {
       "Counts total input lines (files + optional direct prompt) and reports needs_chunking against --threshold-lines so the prompt can decide whether to invoke plan-chunk-input next.",
     ],
     usage: [
-      "fabric script run plan-init --task <text> --type <generate|analyze|implement> --target-form <form> --target <value> [--target-kind <kind>] [--project-root <path>] [--plans-root <path>] [--raw-input <path>]... [--include-stdin] [--stdin-text <text>] [--threshold-lines <int>]",
+      "fabric-poc script run plan-init --task <text> --type <generate|analyze|implement> --target-form <form> --target <value> [--target-kind <kind>] [--project-root <path>] [--plans-root <path>] [--raw-input <path>]... [--include-stdin] [--stdin-text <text>] [--threshold-lines <int>]",
     ],
     parameters: [
       { name: "--task", type: "string", required: true, description: "Human-readable task description recorded in the plan manifest." },
@@ -179,11 +179,11 @@ module.exports = {
     returns: "JSON object with task, type, target_kind, target, target_form, target_key, task_slug, project_root, plans_root, plan_dir, input_signature, input_total_lines, input_threshold_lines, needs_chunking, raw_input_files, includes_stdin, existing_plan_dir, existing_plan_signature, and existing_plan_match.",
     examples: [
       {
-        command: "fabric script run plan-init --task \"generate PRD for myapp\" --type generate --target-form artifact --target-kind PRD --target myapp",
+        command: "fabric-poc script run plan-init --task \"generate PRD for myapp\" --type generate --target-form artifact --target-kind PRD --target myapp",
         description: "Compute identity for a generate-PRD task with no raw-input package; defaults plan_dir to {cwd}/.fabric-plans/generate-prd-myapp.",
       },
       {
-        command: "fabric script run plan-init --task \"analyze docs vs code\" --type analyze --target-form path --target ./docs --raw-input ./docs/README.md --include-stdin --stdin-text \"focus on adr drift\"",
+        command: "fabric-poc script run plan-init --task \"analyze docs vs code\" --type analyze --target-form path --target ./docs --raw-input ./docs/README.md --include-stdin --stdin-text \"focus on adr drift\"",
         description: "Compute identity for an analyze-path task whose raw input includes a file plus direct prompt text.",
       },
     ],
